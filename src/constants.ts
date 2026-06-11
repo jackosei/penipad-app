@@ -36,3 +36,19 @@ export const STORAGE = {
   /** Warn the parent once estimated usage crosses this, in bytes. */
   WARNING_THRESHOLD_BYTES: 200 * 1024 * 1024,
 } as const;
+
+/** PDF rendering guardrails. */
+export const PDF = {
+  /**
+   * Max rasterized pixels per page canvas. 4096x4096 is the iOS Safari canvas
+   * ceiling and a sane memory cap for low-end Android (one page at this size
+   * is ~64 MB RGBA). Render scale is clamped to stay under it.
+   */
+  MAX_RENDER_PIXELS: 4096 * 4096,
+  /** How many PDFPageProxy objects stay warm in the virtualization cache. */
+  PAGE_CACHE_SIZE: 5,
+  /** Longest edge of a shelf cover thumbnail, in pixels. */
+  THUMBNAIL_MAX_EDGE: 320,
+  /** Lossy encode quality for thumbnails (WebP; PNG fallback ignores it). */
+  THUMBNAIL_QUALITY: 0.8,
+} as const;
