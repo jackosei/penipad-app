@@ -22,10 +22,19 @@ export const STROKE_BATCH_VERSION = 1 as const;
 /** A raw pointer sample in the same coordinate space as the active Viewport. */
 export type PointerSample = { x: number; y: number; pressure: number };
 
-/** Reasons the committed state changed. The in-progress stroke does not emit. */
-export type InkChange = 'commit' | 'undo' | 'clear' | 'load';
+/**
+ * Committed-state change notifications. Each event carries enough payload for
+ * a persistence layer to mirror the change without re-reading engine state
+ * (a commit carries the committed stroke). The in-progress stroke never emits:
+ * the hot path stays quiet.
+ */
+export type InkEvent =
+  | { type: 'commit'; pageNumber: number; stroke: Stroke }
+  | { type: 'undo'; pageNumber: number }
+  | { type: 'clear'; pageNumber: number }
+  | { type: 'load'; pageNumber: number };
 
-export type InkChangeListener = (change: InkChange) => void;
+export type InkEventListener = (event: InkEvent) => void;
 
 const DEFAULT_TOOL: ToolId = 'crayon';
 const DEFAULT_COLOR = '#2b2b2b';
@@ -85,7 +94,7 @@ function sanitizeStroke(value: unknown): Stroke | null {
  */
 export class InkEngine {
   private readonly pages = new Map<number, Stroke[]>();
-  private readonly listeners = new Set<InkChangeListener>();
+  private readonly listeners = new Set<InkEventListener>();
 
   private activePage = FIRST_PAGE;
   private tool: ToolId = DEFAULT_TOOL;
@@ -164,7 +173,7 @@ export class InkEngine {
     this.current = null;
     if (!stroke || stroke.points.length === 0) return null;
     this.strokesFor(this.activePage).push(stroke);
-    this.emit('commit');
+    this.emit({ type: 'commit', pageNumber: this.activePage, stroke });
     return stroke;
   }
 
@@ -184,14 +193,14 @@ export class InkEngine {
     const strokes = this.pages.get(this.activePage);
     if (!strokes || strokes.length === 0) return false;
     strokes.pop();
-    this.emit('undo');
+    this.emit({ type: 'undo', pageNumber: this.activePage });
     return true;
   }
 
   /** Remove every stroke from a page. */
   clearPage(pageNumber: number = this.activePage): void {
     this.pages.set(pageNumber, []);
-    this.emit('clear');
+    this.emit({ type: 'clear', pageNumber });
   }
 
   // --- reads ---------------------------------------------------------------
@@ -231,12 +240,12 @@ export class InkEngine {
       }
     }
     this.pages.set(pageNumber, strokes);
-    this.emit('load');
+    this.emit({ type: 'load', pageNumber });
   }
 
   // --- change notification (NOT React) -------------------------------------
 
-  onChange(listener: InkChangeListener): () => void {
+  onChange(listener: InkEventListener): () => void {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
@@ -266,9 +275,9 @@ export class InkEngine {
     };
   }
 
-  private emit(change: InkChange): void {
+  private emit(event: InkEvent): void {
     for (const listener of this.listeners) {
-      listener(change);
+      listener(event);
     }
   }
 }

@@ -237,17 +237,21 @@ describe('InkEngine change notification', () => {
     engine.appendSamples([sample(20, 20)], view);
     expect(listener).not.toHaveBeenCalled(); // hot path stays quiet
 
-    engine.endStroke();
-    expect(listener).toHaveBeenLastCalledWith('commit');
+    const committed = engine.endStroke();
+    expect(listener).toHaveBeenLastCalledWith({
+      type: 'commit',
+      pageNumber: 1,
+      stroke: committed,
+    });
 
     engine.undo();
-    expect(listener).toHaveBeenLastCalledWith('undo');
+    expect(listener).toHaveBeenLastCalledWith({ type: 'undo', pageNumber: 1 });
 
     engine.clearPage();
-    expect(listener).toHaveBeenLastCalledWith('clear');
+    expect(listener).toHaveBeenLastCalledWith({ type: 'clear', pageNumber: 1 });
 
     engine.loadPage(1, []);
-    expect(listener).toHaveBeenLastCalledWith('load');
+    expect(listener).toHaveBeenLastCalledWith({ type: 'load', pageNumber: 1 });
   });
 
   it('stops notifying after unsubscribe', () => {

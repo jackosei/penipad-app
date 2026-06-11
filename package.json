@@ -22,6 +22,7 @@
     "bench": "vitest bench --run --passWithNoTests"
   },
   "dependencies": {
+    "dexie": "^4.4.3",
     "pdfjs-dist": "^6.0.227",
     "perfect-freehand": "^1.2.3",
     "react": "^18.3.1",
@@ -41,6 +42,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
+    "fake-indexeddb": "^6.2.5",
     "globals": "^15.11.0",
     "jsdom": "^25.0.1",
     "prettier": "^3.3.3",

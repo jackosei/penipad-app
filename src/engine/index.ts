@@ -6,7 +6,7 @@
  * bridge. UI and db code should import from here, not from internal modules.
  */
 export { InkEngine, STROKE_BATCH_VERSION } from './ink';
-export type { PointerSample, InkChange, InkChangeListener } from './ink';
+export type { PointerSample, InkEvent, InkEventListener } from './ink';
 
 export { renderStroke, renderStrokes } from './renderer';
 export type { RenderTarget } from './renderer';
