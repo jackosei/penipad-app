@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Scribble Pad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --sky:#EAF4FE;
+    --paper:#FFFFFF;
+    --ink:#33415C;
+    --tray:#FFFFFF;
+    --tray-shadow:0 -6px 24px rgba(51,65,92,.12);
+    --accent:#1E90FF;
+    --r-red:#FF4757; --r-orange:#FFA502; --r-yellow:#FFC92A; --r-green:#2ED573;
+    --r-blue:#1E90FF; --r-purple:#A55EEA; --r-pink:#FF6B9D; --r-black:#3A4356;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Fredoka',ui-rounded,'Comic Sans MS',system-ui,sans-serif;
+    background:var(--sky);
+    background-image:radial-gradient(rgba(30,144,255,.07) 1.5px, transparent 1.5px);
+    background-size:26px 26px;
+    color:var(--ink);
+    display:flex;flex-direction:column;
+    touch-action:manipulation;
+    user-select:none;-webkit-user-select:none;
+  }
+
+  /* ---------- top bar (grown-up zone) ---------- */
+  .topbar{
+    flex:0 0 auto;
+    display:flex;align-items:center;gap:10px;
+    padding:10px 14px;
+  }
+  .brand{font-weight:700;font-size:1.15rem;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+  .brand .dot{width:14px;height:14px;border-radius:50%;background:var(--r-red);box-shadow:18px 0 0 var(--r-yellow),36px 0 0 var(--r-green);margin-right:38px}
+  .spacer{flex:1}
+  .btn{
+    border:none;border-radius:14px;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:.95rem;color:var(--ink);
+    background:var(--paper);padding:10px 16px;
+    box-shadow:0 2px 0 rgba(51,65,92,.15);
+    transition:transform .08s ease;
+  }
+  .btn:active{transform:translateY(2px);box-shadow:none}
+  .btn.primary{background:var(--accent);color:#fff;box-shadow:0 3px 0 #156dc4}
+  .btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .pageNav{display:flex;align-items:center;gap:8px;font-weight:600}
+  .pageNav button{width:42px;height:42px;border-radius:50%;font-size:1.2rem;display:grid;place-items:center}
+  .pageNav button:disabled{opacity:.35;cursor:default}
+  .pageNav .count{min-width:64px;text-align:center;font-size:.95rem}
+
+  /* ---------- stage ---------- */
+  .stage{
+    flex:1 1 auto;position:relative;
+    display:grid;place-items:center;
+    padding:6px 14px 10px;
+    min-height:0;
+  }
+  .sheet{
+    position:relative;border-radius:18px;overflow:hidden;
+    background:var(--paper);
+    box-shadow:0 10px 30px rgba(51,65,92,.18), 0 2px 6px rgba(51,65,92,.10);
+  }
+  .sheet canvas{position:absolute;inset:0;display:block}
+  #pdfCanvas{z-index:1}
+  #drawCanvas{z-index:2;touch-action:none;cursor:crosshair}
+
+  /* ---------- welcome ---------- */
+  .welcome{
+    position:absolute;inset:0;z-index:10;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    text-align:center;padding:24px;
+  }
+  .welcome h1{font-size:clamp(1.6rem,4.5vw,2.6rem);font-weight:700}
+  .welcome p{font-size:1.05rem;max-width:420px;opacity:.85}
+  .welcome .bigBtns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .welcome .btn{font-size:1.1rem;padding:16px 26px;border-radius:18px}
+  .scribbleTitle{position:relative;display:inline-block}
+  .scribbleTitle svg{position:absolute;left:-6%;bottom:-14px;width:112%;height:26px}
+  .hidden{display:none !important}
+
+  /* ---------- bottom tray (kid zone) ---------- */
+  .tray{
+    flex:0 0 auto;z-index:5;
+    background:var(--tray);
+    box-shadow:var(--tray-shadow);
+    border-radius:22px 22px 0 0;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex;align-items:flex-end;justify-content:center;gap:18px;flex-wrap:nowrap;
+    overflow-x:auto;
+  }
+
+  /* crayon palette — the signature element */
+  .crayons{display:flex;align-items:flex-end;gap:6px;padding:0 4px}
+  .crayon{
+    --c:#000;
+    width:34px;height:64px;border:none;cursor:pointer;position:relative;
+    background:transparent;padding:0;flex:0 0 auto;
+    transform:translateY(14px);
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1);
+  }
+  .crayon .body{
+    position:absolute;left:5px;right:5px;top:14px;bottom:0;
+    background:var(--c);border-radius:4px 4px 0 0;
+  }
+  .crayon .body::after{ /* paper wrap stripe */
+    content:'';position:absolute;left:0;right:0;top:34%;height:34%;
+    background:rgba(255,255,255,.32);
+  }
+  .crayon .tip{
+    position:absolute;left:5px;right:5px;top:0;height:16px;
+    background:var(--c);
+    clip-path:polygon(50% 0, 100% 100%, 0 100%);
+    filter:brightness(1.08);
+  }
+  .crayon.active{transform:translateY(0)}
+  .crayon.active::before{
+    content:'';position:absolute;left:50%;top:-9px;transform:translateX(-50%);
+    width:7px;height:7px;border-radius:50%;background:var(--ink);opacity:.7;
+  }
+  .crayon:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+
+  /* tool buttons */
+  .tools{display:flex;gap:10px;align-items:center;padding-bottom:4px}
+  .tool{
+    width:58px;height:58px;border-radius:18px;border:none;cursor:pointer;
+    background:#F1F5FB;display:grid;place-items:center;
+    font-size:1.6rem;line-height:1;
+    box-shadow:inset 0 -3px 0 rgba(51,65,92,.10);
+    transition:transform .08s ease, background .15s ease;
+    flex:0 0 auto;
+  }
+  .tool:active{transform:scale(.92)}
+  .tool.active{background:#DCEBFF;box-shadow:inset 0 0 0 3px var(--accent)}
+  .tool:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .tool svg{width:30px;height:30px}
+
+  .divider{width:2px;height:46px;background:#E4EAF3;border-radius:2px;align-self:center;flex:0 0 auto}
+
+  /* size picker */
+  .sizes{display:flex;gap:8px;align-items:center;padding-bottom:4px}
+  .size{
+    width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;
+    background:#F1F5FB;display:grid;place-items:center;flex:0 0 auto;
+    box-shadow:inset 0 -3px 0 rgba(51,65,92,.10);
+  }
+  .size.active{background:#DCEBFF;box-shadow:inset 0 0 0 3px var(--accent)}
+  .size i{display:block;border-radius:50%;background:var(--ink)}
+  .size[data-size="s"] i{width:8px;height:8px}
+  .size[data-size="m"] i{width:14px;height:14px}
+  .size[data-size="l"] i{width:22px;height:22px}
+
+  /* toast */
+  .toast{
+    position:fixed;left:50%;top:18px;transform:translateX(-50%) translateY(-80px);
+    background:var(--ink);color:#fff;padding:12px 22px;border-radius:14px;
+    font-weight:600;z-index:50;transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:640px){
+    .tray{gap:10px;justify-content:flex-start}
+    .crayon{width:30px;height:56px}
+    .tool{width:52px;height:52px}
+    .topbar{flex-wrap:wrap}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>Scribble Pad</div>
+  <div class="spacer"></div>
+  <div class="pageNav hidden" id="pageNav">
+    <button class="btn" id="prevPage" aria-label="Previous page">‹</button>
+    <span class="count" id="pageCount">1 / 1</span>
+    <button class="btn" id="nextPage" aria-label="Next page">›</button>
+  </div>
+  <button class="btn" id="openBtn2">📂 Open</button>
+  <button class="btn" id="saveBtn">⬇️ Save page</button>
+</div>
+
+<div class="stage" id="stage">
+  <div class="welcome" id="welcome">
+    <h1><span class="scribbleTitle">Let's scribble!
+      <svg viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M4 14 Q 30 4 60 12 T 120 10 T 196 12" fill="none" stroke="#FFC92A" stroke-width="7" stroke-linecap="round"/>
+      </svg></span>
+    </h1>
+    <p>Open any worksheet PDF and write or color the answers with your finger — just like a real crayon.</p>
+    <div class="bigBtns">
+      <button class="btn primary" id="openBtn">📂 Open a worksheet</button>
+      <button class="btn" id="demoBtn">✏️ Try the demo page</button>
+    </div>
+  </div>
+  <div class="sheet hidden" id="sheet">
+    <canvas id="pdfCanvas"></canvas>
+    <canvas id="drawCanvas"></canvas>
+  </div>
+</div>
+
+<div class="tray" id="tray">
+  <div class="crayons" id="crayons" role="group" aria-label="Colors"></div>
+  <div class="divider"></div>
+  <div class="tools">
+    <button class="tool active" id="toolCrayon" aria-label="Crayon" title="Crayon">🖍️</button>
+    <button class="tool" id="toolMarker" aria-label="Marker" title="Marker">🖊️</button>
+    <button class="tool" id="toolEraser" aria-label="Eraser" title="Eraser">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M16.5 3.9 21 8.4a2 2 0 0 1 0 2.8l-8.8 8.8H7.6L3 15.4a2 2 0 0 1 0-2.8l10.7-10.7a2 2 0 0 1 2.8 0Z" stroke="#33415C" stroke-width="2" fill="#FF6B9D"/><path d="m9.5 8.5 6 6" stroke="#33415C" stroke-width="2"/></svg>
+    </button>
+  </div>
+  <div class="divider"></div>
+  <div class="sizes" role="group" aria-label="Brush size">
+    <button class="size" data-size="s" aria-label="Small"><i></i></button>
+    <button class="size active" data-size="m" aria-label="Medium"><i></i></button>
+    <button class="size" data-size="l" aria-label="Large"><i></i></button>
+  </div>
+  <div class="divider"></div>
+  <div class="tools">
+    <button class="tool" id="undoBtn" aria-label="Undo" title="Undo">↩️</button>
+    <button class="tool" id="clearBtn" aria-label="Clear page" title="Clear page">🧽</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept="application/pdf" class="hidden">
+
+<script>
+/* ============================================================
+   Scribble Pad — prototype
+   PDF layer (pdf.js) + vector ink layer on a stacked canvas.
+   Strokes are stored in normalized page coords so they survive
+   resize/rotation and can later be persisted or auto-graded.
+   ============================================================ */
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const COLORS = [
+  ['red','#FF4757'],['orange','#FFA502'],['yellow','#FFC92A'],['green','#2ED573'],
+  ['blue','#1E90FF'],['purple','#A55EEA'],['pink','#FF6B9D'],['black','#3A4356'],
+];
+const SIZES = { s: 0.006, m: 0.012, l: 0.022 };   // fraction of page width
+
+const state = {
+  pdf: null,            // pdf.js document (null in demo mode)
+  demo: false,
+  pageNum: 1,
+  numPages: 1,
+  pageAspect: 8.5/11,   // width / height
+  tool: 'crayon',
+  color: '#FF4757',
+  sizeKey: 'm',
+  strokes: {},          // pageNum -> [stroke]
+  active: null,         // stroke being drawn
+};
+
+const stage = document.getElementById('stage');
+const sheet = document.getElementById('sheet');
+const pdfCanvas = document.getElementById('pdfCanvas');
+const drawCanvas = document.getElementById('drawCanvas');
+const pdfCtx = pdfCanvas.getContext('2d');
+const drawCtx = drawCanvas.getContext('2d');
+let baseSnapshot = document.createElement('canvas'); // committed ink at stroke start
+const DPR = Math.min(window.devicePixelRatio || 1, 3);
+
+/* ---------- layout ---------- */
+function fitSheet() {
+  const pad = 8;
+  const w = stage.clientWidth - pad*2;
+  const h = stage.clientHeight - pad*2;
+  let sw = w, sh = w / state.pageAspect;
+  if (sh > h) { sh = h; sw = h * state.pageAspect; }
+  sheet.style.width = sw + 'px';
+  sheet.style.height = sh + 'px';
+  for (const c of [pdfCanvas, drawCanvas]) {
+    c.width = Math.round(sw * DPR);
+    c.height = Math.round(sh * DPR);
+    c.style.width = sw + 'px';
+    c.style.height = sh + 'px';
+  }
+}
+
+/* ---------- PDF / demo page rendering ---------- */
+let renderTask = null;
+async function renderPage() {
+  fitSheet();
+  if (state.demo) { drawDemoWorksheet(); replayStrokes(); updateNav(); return; }
+  if (!state.pdf) return;
+  const page = await state.pdf.getPage(state.pageNum);
+  const vp1 = page.getViewport({ scale: 1 });
+  state.pageAspect = vp1.width / vp1.height;
+  fitSheet(); // refit with true aspect
+  const scale = pdfCanvas.width / vp1.width;
+  const viewport = page.getViewport({ scale });
+  if (renderTask) renderTask.cancel();
+  pdfCtx.fillStyle = '#fff';
+  pdfCtx.fillRect(0,0,pdfCanvas.width,pdfCanvas.height);
+  renderTask = page.render({ canvasContext: pdfCtx, viewport });
+  try { await renderTask.promise; } catch(e){ /* cancelled */ }
+  renderTask = null;
+  replayStrokes();
+  updateNav();
+}
+
+function updateNav() {
+  const nav = document.getElementById('pageNav');
+  nav.classList.toggle('hidden', state.numPages <= 1);
+  document.getElementById('pageCount').textContent = `${state.pageNum} / ${state.numPages}`;
+  document.getElementById('prevPage').disabled = state.pageNum <= 1;
+  document.getElementById('nextPage').disabled = state.pageNum >= state.numPages;
+}
+
+/* A built-in original practice page so kids can test instantly. */
+function drawDemoWorksheet() {
+  const W = pdfCanvas.width, H = pdfCanvas.height, u = W/100;
+  const g = pdfCtx;
+  g.fillStyle = '#fff'; g.fillRect(0,0,W,H);
+  // header band
+  g.fillStyle = '#EAF4FE'; g.fillRect(0,0,W,H*0.14);
+  g.fillStyle = '#33415C';
+  g.font = `700 ${u*6.5}px Fredoka, sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText('Add it up!', W/2, H*0.07);
+  const rows = [[2,3],[4,1],[5,2]];
+  const rowY = i => H*0.26 + i*H*0.22;
+  const cols = [W*0.18, W*0.5, W*0.82];
+  const R = Math.min(W,H)*0.085;
+  rows.forEach((pair,i)=>{
+    const y = rowY(i);
+    // circles
+    cols.forEach((x,ci)=>{
+      g.beginPath(); g.arc(x,y,R,0,Math.PI*2);
+      g.fillStyle = ci===2 ? '#FFF7DF' : '#F1F5FB'; g.fill();
+      g.lineWidth = u*0.8; g.strokeStyle = ci===2 ? '#FFC92A' : '#C9D6E8';
+      g.setLineDash(ci===2 ? [u*1.6,u*1.6] : []); g.stroke(); g.setLineDash([]);
+    });
+    // numbers & signs
+    g.fillStyle = '#33415C';
+    g.font = `700 ${R*1.2}px Fredoka, sans-serif`;
+    g.fillText(String(pair[0]), cols[0], y);
+    g.fillText(String(pair[1]), cols[1], y);
+    g.font = `700 ${R*0.9}px Fredoka, sans-serif`;
+    g.fillText('+', (cols[0]+cols[1])/2, y);
+    g.fillText('=', (cols[1]+cols[2])/2, y);
+  });
+  g.font = `500 ${u*3.2}px Fredoka, sans-serif`;
+  g.fillStyle = '#8A97AD';
+  g.fillText('Write the answer in the yellow circle', W/2, H*0.92);
+}
+
+/* ---------- ink engine ---------- */
+function strokesForPage(){ 
+  return state.strokes[state.pageNum] || (state.strokes[state.pageNum] = []); 
+}
+
+function pathFromPoints(ctx, pts, W, H) {
+  ctx.beginPath();
+  if (pts.length === 1) {
+    ctx.moveTo(pts[0].x*W, pts[0].y*H);
+    ctx.lineTo(pts[0].x*W + 0.01, pts[0].y*H);
+    return;
+  }
+  ctx.moveTo(pts[0].x*W, pts[0].y*H);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i+1].x)/2 * W;
+    const my = (pts[i].y + pts[i+1].y)/2 * H;
+    ctx.quadraticCurveTo(pts[i].x*W, pts[i].y*H, mx, my);
+  }
+  const last = pts[pts.length-1];
+  ctx.lineTo(last.x*W, last.y*H);
+}
+
+function renderStroke(ctx, s) {
+  const W = drawCanvas.width, H = drawCanvas.height;
+  const base = s.size * W;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (s.tool === 'eraser') {
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = '#000'; ctx.lineWidth = base * 2.4;
+    pathFromPoints(ctx, s.points, W, H); ctx.stroke();
+  } else if (s.tool === 'marker') {
+    ctx.globalAlpha = 0.45;
+    ctx.strokeStyle = s.color; ctx.lineWidth = base * 1.9;
+    pathFromPoints(ctx, s.points, W, H); ctx.stroke();
+  } else { // crayon: two slightly offset passes = waxy edge
+    ctx.strokeStyle = s.color;
+    ctx.globalAlpha = 0.92; ctx.lineWidth = base;
+    pathFromPoints(ctx, s.points, W, H); ctx.stroke();
+    ctx.globalAlpha = 0.30; ctx.lineWidth = base * 1.45;
+    ctx.translate(base*0.12, -base*0.10);
+    pathFromPoints(ctx, s.points, W, H); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function replayStrokes() {
+  drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  for (const s of strokesForPage()) renderStroke(drawCtx, s);
+}
+
+/* live drawing: snapshot committed ink, redraw snapshot+active each frame */
+let raf = null;
+function frame() {
+  raf = null;
+  drawCtx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  drawCtx.drawImage(baseSnapshot, 0, 0);
+  if (state.active) renderStroke(drawCtx, state.active);
+}
+function requestFrame(){ if (!raf) raf = requestAnimationFrame(frame); }
+
+function ptFromEvent(e) {
+  const r = drawCanvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left)/r.width, y: (e.clientY - r.top)/r.height };
+}
+
+drawCanvas.addEventListener('pointerdown', e => {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  drawCanvas.setPointerCapture(e.pointerId);
+  baseSnapshot.width = drawCanvas.width;
+  baseSnapshot.height = drawCanvas.height;
+  baseSnapshot.getContext('2d').drawImage(drawCanvas, 0, 0);
+  state.active = {
+    tool: state.tool,
+    color: state.color,
+    size: SIZES[state.sizeKey],
+    points: [ptFromEvent(e)],
+  };
+  requestFrame();
+});
+drawCanvas.addEventListener('pointermove', e => {
+  if (!state.active) return;
+  const evts = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ev of evts) {
+    const p = ptFromEvent(ev);
+    const pts = state.active.points;
+    const lp = pts[pts.length-1];
+    const d = Math.hypot(p.x-lp.x, p.y-lp.y);
+    if (d > 0.0015) pts.push(p);
+  }
+  requestFrame();
+});
+function endStroke(e) {
+  if (!state.active) return;
+  strokesForPage().push(state.active);
+  state.active = null;
+  requestFrame();
+}
+drawCanvas.addEventListener('pointerup', endStroke);
+drawCanvas.addEventListener('pointercancel', endStroke);
+
+/* ---------- controls ---------- */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 1600);
+}
+
+// crayon palette
+const crayonsEl = document.getElementById('crayons');
+COLORS.forEach(([name, hex], i) => {
+  const b = document.createElement('button');
+  b.className = 'crayon' + (i===0 ? ' active' : '');
+  b.style.setProperty('--c', hex);
+  b.setAttribute('aria-label', name + ' crayon');
+  b.innerHTML = '<span class="tip"></span><span class="body"></span>';
+  b.addEventListener('click', () => {
+    state.color = hex;
+    crayonsEl.querySelectorAll('.crayon').forEach(c=>c.classList.remove('active'));
+    b.classList.add('active');
+    if (state.tool === 'eraser') setTool('crayon'); // picking a color exits eraser
+  });
+  crayonsEl.appendChild(b);
+});
+
+const toolBtns = { crayon: toolCrayon, marker: toolMarker, eraser: toolEraser };
+function setTool(t) {
+  state.tool = t;
+  for (const k in toolBtns) toolBtns[k].classList.toggle('active', k === t);
+}
+toolCrayon.addEventListener('click', ()=>setTool('crayon'));
+toolMarker.addEventListener('click', ()=>setTool('marker'));
+toolEraser.addEventListener('click', ()=>setTool('eraser'));
+
+document.querySelectorAll('.size').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.sizeKey = btn.dataset.size;
+    document.querySelectorAll('.size').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+undoBtn.addEventListener('click', () => { strokesForPage().pop(); replayStrokes(); });
+clearBtn.addEventListener('click', () => {
+  if (!strokesForPage().length) return;
+  state.strokes[state.pageNum] = [];
+  replayStrokes();
+  toast('Page wiped clean ✨');
+});
+
+prevPage.addEventListener('click', ()=>{ if(state.pageNum>1){ state.pageNum--; renderPage(); }});
+nextPage.addEventListener('click', ()=>{ if(state.pageNum<state.numPages){ state.pageNum++; renderPage(); }});
+
+/* ---------- open / save ---------- */
+const fileInput = document.getElementById('fileInput');
+openBtn.addEventListener('click', ()=>fileInput.click());
+openBtn2.addEventListener('click', ()=>fileInput.click());
+fileInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    state.pdf = pdf; state.demo = false;
+    state.numPages = pdf.numPages; state.pageNum = 1;
+    state.strokes = {};
+    document.getElementById('welcome').classList.add('hidden');
+    sheet.classList.remove('hidden');
+    await renderPage();
+    toast(`Opened: ${file.name}`);
+  } catch (err) {
+    toast("Couldn't open that PDF — try another file");
+    console.error(err);
+  }
+  fileInput.value = '';
+});
+
+demoBtn.addEventListener('click', () => {
+  state.pdf = null; state.demo = true;
+  state.numPages = 1; state.pageNum = 1;
+  state.pageAspect = 8.5/11;
+  state.strokes = {};
+  document.getElementById('welcome').classList.add('hidden');
+  sheet.classList.remove('hidden');
+  renderPage();
+});
+
+saveBtn.addEventListener('click', () => {
+  if (sheet.classList.contains('hidden')) { toast('Open a worksheet first'); return; }
+  const out = document.createElement('canvas');
+  out.width = pdfCanvas.width; out.height = pdfCanvas.height;
+  const g = out.getContext('2d');
+  g.drawImage(pdfCanvas, 0, 0);
+  g.drawImage(drawCanvas, 0, 0);
+  const a = document.createElement('a');
+  a.download = `scribble-page-${state.pageNum}.png`;
+  a.href = out.toDataURL('image/png');
+  a.click();
+  toast('Saved! 🎉');
+});
+
+/* ---------- resize ---------- */
+let resizeT = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    if (!sheet.classList.contains('hidden')) renderPage();
+  }, 150);
+});
+
+/* prevent iOS double-tap zoom inside the app shell */
+document.addEventListener('dblclick', e => e.preventDefault(), { passive:false });
+</script>
+</body>
+</html>
