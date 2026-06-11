@@ -37,6 +37,14 @@ describe('renderStroke', () => {
     expect(ctx.fills[0]?.composite).toBe('source-over');
   });
 
+  it('fills the pencil once with the stroke color', () => {
+    const ctx = new RecordingTarget();
+    renderStroke(ctx, stroke({ tool: 'pencil', color: '#445566' }), REFERENCE_PAGE_SIZE);
+    expect(ctx.fills).toHaveLength(1);
+    expect(ctx.fills[0]?.composite).toBe('source-over');
+    expect(ctx.fills[0]?.fillStyle).toBe('#445566');
+  });
+
   it('erases with destination-out regardless of the stroke color', () => {
     const ctx = new RecordingTarget();
     renderStroke(ctx, stroke({ tool: 'eraser', color: '#00ff00' }), REFERENCE_PAGE_SIZE);

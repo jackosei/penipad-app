@@ -9,7 +9,7 @@ describe('isToolId', () => {
   });
 
   it('rejects unknown strings and non-strings (untrusted persisted data)', () => {
-    expect(isToolId('pencil')).toBe(false);
+    expect(isToolId('highlighter')).toBe(false);
     expect(isToolId('')).toBe(false);
     expect(isToolId(null)).toBe(false);
     expect(isToolId(undefined)).toBe(false);
@@ -36,6 +36,15 @@ describe('TOOL_CONFIGS', () => {
     expect(marker.passes).toHaveLength(1);
     expect(marker.passes[0]?.composite).toBe('source-over');
     expect(marker.passes[0]?.alpha).toBeLessThan(1);
+  });
+
+  it('renders the pencil as a fine, near-opaque single pass', () => {
+    const pencil = TOOL_CONFIGS.pencil;
+    expect(pencil.passes).toHaveLength(1);
+    expect(pencil.passes[0]?.composite).toBe('source-over');
+    expect(pencil.usesColor).toBe(true);
+    // Finer than a crayon at the same brush size.
+    expect(pencil.sizeScale).toBeLessThan(TOOL_CONFIGS.crayon.sizeScale);
   });
 
   it('erases with destination-out and ignores color', () => {

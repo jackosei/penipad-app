@@ -213,7 +213,7 @@ describe('InkEngine load-path data safety', () => {
       pageNumber: 1,
       strokes: [
         { tool: 'crayon', color: '#111', size: 0.02, points: [{ x: 0.1, y: 0.1, pressure: 0.5 }] },
-        { tool: 'pencil', points: [{ x: 0, y: 0 }] }, // invalid tool
+        { tool: 'glitter', points: [{ x: 0, y: 0 }] }, // invalid tool
         { tool: 'marker', points: 'not-an-array' }, // invalid points
         null,
         { tool: 'marker', color: '#222', size: 0.03, points: [{ x: 0.4, y: 0.4, pressure: 0.6 }] },

@@ -33,7 +33,8 @@ const ERASER_FILL = '#000000';
  */
 export function renderStroke(ctx: RenderTarget, stroke: Stroke, size: PageSize): void {
   const config = TOOL_CONFIGS[stroke.tool];
-  const outline = buildOutline(stroke.points, size, stroke.size, config.strokeOptions);
+  const brushSize = stroke.size * config.sizeScale;
+  const outline = buildOutline(stroke.points, size, brushSize, config.strokeOptions);
   if (outline.length < 2) return;
 
   const fillStyle = config.usesColor ? stroke.color : ERASER_FILL;

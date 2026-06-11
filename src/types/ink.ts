@@ -11,7 +11,7 @@
  */
 
 /** The drawing tools. A closed set, modeled as a union so it serializes as a plain string. */
-export type ToolId = 'crayon' | 'marker' | 'eraser';
+export type ToolId = 'crayon' | 'marker' | 'pencil' | 'eraser';
 
 /** A point in normalized page space. Both axes are 0..1. */
 export type NormPoint = { x: number; y: number };

@@ -58,10 +58,10 @@ bench/         Performance benchmarks (ink latency)
 
 ## Deployment
 
-Web target is Cloudflare Pages.
+Web target is Cloudflare (Workers Static Assets), configured in `wrangler.jsonc`.
 
 - Build command: `npm run build`
 - Output directory: `dist`
-- `public/_redirects` provides the SPA fallback.
+- SPA fallback is handled by `not_found_handling: "single-page-application"` in `wrangler.jsonc`. Do not add a classic `_redirects` catch-all; the Static Assets validator rejects `/* /index.html 200` as an infinite loop.
 
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, format check, tests, the bench gate, and build on every push and PR to `main`.
