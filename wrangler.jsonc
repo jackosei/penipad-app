@@ -1,0 +1,13 @@
+{
+  // Static-assets deploy for Cloudflare (Workers Static Assets).
+  // Phase 1 ships no server code: this is a pure SPA served from dist/.
+  // Declaring assets explicitly opts out of wrangler's Vite-framework
+  // auto-configuration (which would require Vite >= 6 that we don't need).
+  "name": "penipad-app",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for client-side routes (SPA fallback).
+    "not_found_handling": "single-page-application"
+  }
+}
