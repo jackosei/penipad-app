@@ -335,7 +335,25 @@ button {
   padding: 0 24px;
 }
 
-.activity__back {
+.pending-home {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 rgba(51, 65, 92, 0.12);
+  transition: transform 0.08s ease;
+}
+
+.pending-home:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.activity__home {
   position: fixed;
   top: 14px;
   left: 14px;
@@ -352,7 +370,7 @@ button {
   z-index: 10;
 }
 
-.activity__back:active {
+.activity__home:active {
   transform: translateY(3px);
   box-shadow: none;
 }
@@ -364,13 +382,18 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Breathing room so the worksheet never touches the top edge or the tray.
-     Extra top room clears the back and Done buttons. */
-  padding: 76px 16px 16px;
+}
+
+/* Page-sized wrapper: the canvas fills it; page nav pins to its edges so the
+   arrows sit against the PDF, not at the screen edge. Overflow stays visible
+   so the arrows can hang just outside the page. */
+.activity__stage {
+  position: relative;
 }
 
 .canvas-stack {
-  position: relative;
+  position: absolute;
+  inset: 0;
   background: var(--paper);
   border-radius: 18px;
   overflow: hidden;
@@ -479,15 +502,16 @@ button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: var(--paper);
+  /* Slightly translucent so the worksheet shows through at the page edge. */
+  background: rgba(255, 255, 255, 0.9);
   color: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 0 rgba(51, 65, 92, 0.12);
+  box-shadow: 0 3px 8px rgba(51, 65, 92, 0.2);
   z-index: 5;
   transition: transform 0.08s ease;
 }
@@ -501,12 +525,13 @@ button {
   opacity: 0.3;
 }
 
+/* Hang the arrows half over the page edge, against the PDF. */
 .page-nav--prev {
-  left: 10px;
+  left: -26px;
 }
 
 .page-nav--next {
-  right: 10px;
+  right: -26px;
 }
 
 .page-dots {

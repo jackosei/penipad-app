@@ -109,6 +109,15 @@ export function PlusIcon({ size = 28, className }: IconProps): JSX.Element {
   );
 }
 
+/** Home: a house silhouette for the return-to-shelf action. */
+export function HomeIcon({ size = 28, className }: IconProps): JSX.Element {
+  return (
+    <svg {...svgProps(size, className)}>
+      <path d="M11.3 3.3a1 1 0 0 1 1.4 0l8 7.6A1 1 0 0 1 20 12.7V20a2 2 0 0 1-2 2h-3v-6h-4v6H6a2 2 0 0 1-2-2v-7.3a1 1 0 0 1 .3-.8l7-6.6z" />
+    </svg>
+  );
+}
+
 /** A page/worksheet silhouette for empty covers. */
 export function PageIcon({ size = 28, className }: IconProps): JSX.Element {
   return (

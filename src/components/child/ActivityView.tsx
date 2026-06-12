@@ -13,7 +13,7 @@ import { Toolbar } from './Toolbar';
 import { PageNav } from './PageNav';
 import { DoneButton } from './DoneButton';
 import { StickerLayer } from './StickerLayer';
-import { BackIcon } from '@/components/shared/icons';
+import { HomeIcon } from '@/components/shared/icons';
 
 export type ActivityViewProps = {
   documentId: string;
@@ -40,8 +40,8 @@ export function ActivityView({ documentId }: ActivityViewProps): JSX.Element {
             ? 'This worksheet is no longer on the device.'
             : session.message}
         </p>
-        <button type="button" className="page-nav" aria-label="back" onClick={openShelf}>
-          <BackIcon />
+        <button type="button" className="pending-home" aria-label="home" onClick={openShelf}>
+          <HomeIcon />
         </button>
       </main>
     );
@@ -83,19 +83,24 @@ function DrawingScreen({
 
   return (
     <main className="activity">
-      <button type="button" className="activity__back" aria-label="back to shelf" onClick={onBack}>
-        <BackIcon />
+      <button type="button" className="activity__home" aria-label="home" onClick={onBack}>
+        <HomeIcon />
       </button>
       <DoneButton engine={engine} />
 
       <div className="activity__page-area" ref={containerRef}>
-        <div className="canvas-stack" style={stackStyle}>
-          <canvas ref={pdfCanvasRef} className="canvas-stack__layer" />
-          <canvas ref={committedCanvasRef} className="canvas-stack__layer" />
-          <canvas ref={liveCanvasRef} className="canvas-stack__layer canvas-stack__layer--input" />
-          <StickerLayer engine={engine} page={currentPage} />
+        <div className="activity__stage" style={stackStyle}>
+          <div className="canvas-stack">
+            <canvas ref={pdfCanvasRef} className="canvas-stack__layer" />
+            <canvas ref={committedCanvasRef} className="canvas-stack__layer" />
+            <canvas
+              ref={liveCanvasRef}
+              className="canvas-stack__layer canvas-stack__layer--input"
+            />
+            <StickerLayer engine={engine} page={currentPage} />
+          </div>
+          <PageNav currentPage={currentPage} pageCount={pageCount} onNavigate={onNavigate} />
         </div>
-        <PageNav currentPage={currentPage} pageCount={pageCount} onNavigate={onNavigate} />
       </div>
 
       <Toolbar engine={engine} />

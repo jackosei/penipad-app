@@ -8,6 +8,9 @@ import { useEffect, useRef, useState } from 'react';
 import { attachInkInput, InkSurface, type InkEngine, type Viewport } from '@/engine';
 import type { PdfDocumentHandle } from '@/pdf/loader';
 
+/** Breathing room above and below the page, in CSS px. */
+const PAGE_INSET_Y = 14;
+
 export type DrawingSurfaceRefs = {
   containerRef: React.RefObject<HTMLDivElement>;
   pdfCanvasRef: React.RefObject<HTMLCanvasElement>;
@@ -60,10 +63,15 @@ export function useDrawingSurface(
       const aspect = await pdf.getPageAspectRatio(currentPage);
       if (epoch !== renderEpoch) return;
 
-      // Fit the page inside the container, width- or height-bound.
+      // Fit the page inside the container, width- or height-bound. A vertical
+      // inset keeps the page off the top edge and the tray without padding the
+      // container (padding would inflate getBoundingClientRect and the page
+      // would overhang). Side margins fall out of centering a portrait page.
       const bounds = container.getBoundingClientRect();
-      if (bounds.width <= 0 || bounds.height <= 0) return;
-      const cssWidth = Math.min(bounds.width, bounds.height * aspect);
+      const availWidth = bounds.width;
+      const availHeight = bounds.height - PAGE_INSET_Y * 2;
+      if (availWidth <= 0 || availHeight <= 0) return;
+      const cssWidth = Math.min(availWidth, availHeight * aspect);
       const cssHeight = cssWidth / aspect;
 
       const result = await pdf.renderPage(currentPage, pdfCanvas, {
