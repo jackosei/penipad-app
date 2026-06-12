@@ -32,22 +32,22 @@ export const INK = {
 } as const;
 
 /**
- * The 8-color child palette (F1.4). High-saturation, names irrelevant: the
- * child picks by sight. Order matches the tray layout left to right.
+ * The 8-color child palette (F1.4). High-saturation crayon colors, names
+ * irrelevant: the child picks by sight. Order matches the tray left to right.
  */
 export const INK_PALETTE = [
-  '#E5484D', // red
-  '#F76B15', // orange
-  '#FFC53D', // yellow
-  '#46A758', // green
-  '#0090FF', // blue
-  '#8E4EC6', // purple
-  '#8D6E63', // brown
-  '#1B1B1F', // near-black
+  '#FF4757', // red
+  '#FFA502', // orange
+  '#FFC92A', // yellow
+  '#2ED573', // green
+  '#1E90FF', // blue
+  '#A55EEA', // purple
+  '#FF6B9D', // pink
+  '#3A4356', // near-black
 ] as const;
 
 /** Three brush sizes (F1.4), normalized to page width like Stroke.size. */
-export const BRUSH_SIZES = [0.008, 0.014, 0.024] as const;
+export const BRUSH_SIZES = [0.006, 0.012, 0.022] as const;
 
 /** Parental gate (Phase 1, UI-only barrier): hold duration in milliseconds. */
 export const PARENT_GATE_HOLD_MS = 3000;

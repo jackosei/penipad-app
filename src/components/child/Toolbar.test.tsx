@@ -13,6 +13,17 @@ describe('Toolbar', () => {
     useActivityUiStore.setState({ tool: 'crayon', color: INK_PALETTE[0], sizeIndex: 1 });
   });
 
+  it('syncs the displayed selection into the engine on mount (no tap needed)', () => {
+    // Regression: engine kept its own default color until a swatch was tapped,
+    // so the first scribble drew black while the tray showed red.
+    useActivityUiStore.setState({ tool: 'crayon', color: INK_PALETTE[0], sizeIndex: 2 });
+    render(<Toolbar engine={engine} />);
+
+    expect(engine.getColor()).toBe(INK_PALETTE[0]);
+    expect(engine.getTool()).toBe('crayon');
+    expect(engine.getSize()).toBe(BRUSH_SIZES[2]);
+  });
+
   it('mirrors tool selection into the engine', () => {
     render(<Toolbar engine={engine} />);
 
@@ -21,6 +32,17 @@ describe('Toolbar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'eraser' }));
     expect(engine.getTool()).toBe('eraser');
+  });
+
+  it('leaves the eraser when a color is picked (picking a color means draw)', () => {
+    useActivityUiStore.setState({ tool: 'eraser', color: INK_PALETTE[0], sizeIndex: 1 });
+    render(<Toolbar engine={engine} />);
+    expect(engine.getTool()).toBe('eraser');
+
+    fireEvent.click(screen.getByRole('button', { name: `color ${INK_PALETTE[3]}` }));
+
+    expect(engine.getTool()).toBe('crayon');
+    expect(engine.getColor()).toBe(INK_PALETTE[3]);
   });
 
   it('offers all four tools and the full 8-color palette (F1.4)', () => {
