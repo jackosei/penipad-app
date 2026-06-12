@@ -598,31 +598,18 @@ button {
 
 /* ---------- child tray ---------- */
 
-/* Two stacked rows: colors on top, tools/sizes/Done below. Each row fits
-   tablet width on its own, so the tray never wraps unevenly. */
+/* Single row: tools, color picker, sizes, Done. Colors live in a popover off
+   the palette button, so the row stays narrow and never wraps on tablets. */
 .tray {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px calc(10px + env(safe-area-inset-bottom));
-  background: var(--paper);
-  border-radius: 24px 24px 0 0;
-  box-shadow: 0 -6px 24px rgba(51, 65, 92, 0.12);
-}
-
-.tray__row {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Last-resort wrap only on extremely narrow (portrait phone) screens. */
   flex-wrap: wrap;
-  gap: 6px 12px;
-}
-
-.tray__row--colors {
-  align-items: flex-end;
-  gap: 2px;
+  gap: 8px 12px;
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -6px 24px rgba(51, 65, 92, 0.12);
 }
 
 .tray__group {
@@ -637,6 +624,77 @@ button {
   border-radius: 2px;
   background: var(--divider);
   align-self: center;
+}
+
+/* ---------- color picker (trigger + popover) ---------- */
+
+.color-picker {
+  position: relative;
+  display: inline-flex;
+}
+
+.color-trigger {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The current color rides as a thick inner ring. */
+  box-shadow: inset 0 0 0 5px var(--current, #000);
+  transition: transform 0.08s ease;
+}
+
+.color-trigger:active {
+  transform: scale(0.92);
+}
+
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+}
+
+.color-popover {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 2px 6px;
+  padding: 12px;
+  background: var(--paper);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(51, 65, 92, 0.28);
+  z-index: 20;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+  animation: popover-pop 0.16s var(--spring);
+}
+
+/* Caret pointing down to the trigger. */
+.color-popover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 9px solid transparent;
+  border-top-color: var(--paper);
+}
+
+@keyframes popover-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
 }
 
 /* tool buttons */

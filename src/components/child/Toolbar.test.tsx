@@ -13,6 +13,11 @@ describe('Toolbar', () => {
     useActivityUiStore.setState({ tool: 'crayon', color: INK_PALETTE[0], sizeIndex: 1 });
   });
 
+  /** Colors live in a popover; open it before selecting a crayon. */
+  function openColors(): void {
+    fireEvent.click(screen.getByRole('button', { name: 'colors' }));
+  }
+
   it('syncs the displayed selection into the engine on mount (no tap needed)', () => {
     // Regression: engine kept its own default color until a swatch was tapped,
     // so the first scribble drew black while the tray showed red.
@@ -39,30 +44,43 @@ describe('Toolbar', () => {
     render(<Toolbar engine={engine} />);
     expect(engine.getTool()).toBe('eraser');
 
+    openColors();
     fireEvent.click(screen.getByRole('button', { name: `color ${INK_PALETTE[3]}` }));
 
     expect(engine.getTool()).toBe('crayon');
     expect(engine.getColor()).toBe(INK_PALETTE[3]);
   });
 
-  it('offers all four tools and the full 8-color palette (F1.4)', () => {
+  it('offers all four tools and the full 8-color palette in the popover (F1.4)', () => {
     render(<Toolbar engine={engine} />);
 
     for (const tool of ['crayon', 'marker', 'pencil', 'eraser']) {
       expect(screen.getByRole('button', { name: tool })).toBeInTheDocument();
     }
-    const swatches = screen.getAllByRole('button', { name: /^color / });
-    expect(swatches).toHaveLength(8);
+    // Colors are hidden until the palette button is tapped.
+    expect(screen.queryAllByRole('button', { name: /^color / })).toHaveLength(0);
+    openColors();
+    expect(screen.getAllByRole('button', { name: /^color / })).toHaveLength(8);
   });
 
   it('mirrors color and size selection into the engine', () => {
     render(<Toolbar engine={engine} />);
 
+    openColors();
     fireEvent.click(screen.getByRole('button', { name: `color ${INK_PALETTE[4]}` }));
     expect(engine.getColor()).toBe(INK_PALETTE[4]);
 
     fireEvent.click(screen.getByRole('button', { name: 'size 3' }));
     expect(engine.getSize()).toBe(BRUSH_SIZES[2]);
+  });
+
+  it('closes the color popover after a crayon is picked', () => {
+    render(<Toolbar engine={engine} />);
+    openColors();
+    expect(screen.getAllByRole('button', { name: /^color / })).toHaveLength(8);
+
+    fireEvent.click(screen.getByRole('button', { name: `color ${INK_PALETTE[2]}` }));
+    expect(screen.queryAllByRole('button', { name: /^color / })).toHaveLength(0);
   });
 
   it('includes the green Done button (undo/redo live in the top bar)', () => {
