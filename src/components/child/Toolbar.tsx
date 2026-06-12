@@ -49,7 +49,9 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
 
   return (
     <div className="tray" data-testid="toolbar">
-      <div className="tray__group tray__group--crayons" role="group" aria-label="Colors">
+      {/* Row 1: the full crayon color strip gets its own row so it never
+          competes for width with the tools (fixes tablet wrapping). */}
+      <div className="tray__row tray__row--colors" role="group" aria-label="Colors">
         {INK_PALETTE.map((swatch) => (
           <button
             key={swatch}
@@ -68,46 +70,47 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
         ))}
       </div>
 
-      <span className="tray__divider" aria-hidden />
+      {/* Row 2: tools, sizes, and the Done button. */}
+      <div className="tray__row">
+        <div className="tray__group" role="group" aria-label="Tools">
+          {TOOL_ORDER.map((id) => {
+            const Icon = TOOL_ICONS[id];
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`tool-button${tool === id ? ' tool-button--active' : ''}`}
+                aria-label={id}
+                aria-pressed={tool === id}
+                onClick={() => setTool(id)}
+              >
+                <Icon size={TOOL_GLYPH_SIZE} aria-hidden />
+              </button>
+            );
+          })}
+        </div>
 
-      <div className="tray__group" role="group" aria-label="Tools">
-        {TOOL_ORDER.map((id) => {
-          const Icon = TOOL_ICONS[id];
-          return (
+        <span className="tray__divider" aria-hidden />
+
+        <div className="tray__group" role="group" aria-label="Sizes">
+          {BRUSH_SIZES.map((_, index) => (
             <button
-              key={id}
+              key={index}
               type="button"
-              className={`tool-button${tool === id ? ' tool-button--active' : ''}`}
-              aria-label={id}
-              aria-pressed={tool === id}
-              onClick={() => setTool(id)}
+              className={`size-button${sizeIndex === index ? ' size-button--active' : ''}`}
+              aria-label={`size ${index + 1}`}
+              aria-pressed={sizeIndex === index}
+              onClick={() => setSizeIndex(index as 0 | 1 | 2)}
             >
-              <Icon size={TOOL_GLYPH_SIZE} aria-hidden />
+              <span className="size-button__dot" data-size={index} aria-hidden />
             </button>
-          );
-        })}
+          ))}
+        </div>
+
+        <span className="tray__divider" aria-hidden />
+
+        <DoneButton engine={engine} />
       </div>
-
-      <span className="tray__divider" aria-hidden />
-
-      <div className="tray__group" role="group" aria-label="Sizes">
-        {BRUSH_SIZES.map((_, index) => (
-          <button
-            key={index}
-            type="button"
-            className={`size-button${sizeIndex === index ? ' size-button--active' : ''}`}
-            aria-label={`size ${index + 1}`}
-            aria-pressed={sizeIndex === index}
-            onClick={() => setSizeIndex(index as 0 | 1 | 2)}
-          >
-            <span className="size-button__dot" data-size={index} aria-hidden />
-          </button>
-        ))}
-      </div>
-
-      <span className="tray__divider" aria-hidden />
-
-      <DoneButton engine={engine} />
     </div>
   );
 }
