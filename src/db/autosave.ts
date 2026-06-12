@@ -61,7 +61,7 @@ export function startAutosave(options: AutosaveOptions): AutosaveHandle {
   const onInkEvent = (event: InkEvent): void => {
     switch (event.type) {
       case 'commit':
-        enqueue(() => appendStrokeBatch(activityId, event.pageNumber, [event.stroke]));
+        enqueue(() => appendStrokeBatch(activityId, event.pageNumber, [event.mark]));
         break;
       case 'undo':
         enqueue(() => deleteLatestStrokeBatch(activityId, event.pageNumber));

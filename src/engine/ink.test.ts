@@ -46,13 +46,13 @@ describe('InkEngine stroke lifecycle', () => {
 
   it('ignores appended samples when no stroke is active', () => {
     expect(engine.appendSamples([sample(1, 1)], view)).toBe(false);
-    expect(engine.getStrokeCount()).toBe(0);
+    expect(engine.getMarkCount()).toBe(0);
   });
 
   it('does not commit an empty stroke', () => {
     engine.cancelStroke();
     expect(engine.endStroke()).toBeNull();
-    expect(engine.getStrokeCount()).toBe(0);
+    expect(engine.getMarkCount()).toBe(0);
   });
 
   it('cancel discards the in-progress stroke without committing', () => {
@@ -60,7 +60,7 @@ describe('InkEngine stroke lifecycle', () => {
     engine.cancelStroke();
     expect(engine.getCurrentStroke()).toBeNull();
     expect(engine.endStroke()).toBeNull();
-    expect(engine.getStrokeCount()).toBe(0);
+    expect(engine.getMarkCount()).toBe(0);
   });
 });
 
@@ -71,10 +71,10 @@ describe('InkEngine undo', () => {
       engine.beginStroke(sample(i * 10, i * 10), view);
       engine.endStroke();
     }
-    expect(engine.getStrokeCount()).toBe(3);
+    expect(engine.getMarkCount()).toBe(3);
 
     expect(engine.undo()).toBe(true);
-    expect(engine.getStrokeCount()).toBe(2);
+    expect(engine.getMarkCount()).toBe(2);
   });
 
   it('returns false when there is nothing to undo', () => {
@@ -91,7 +91,7 @@ describe('InkEngine undo', () => {
     for (let i = 0; i < 50; i++) {
       expect(engine.undo()).toBe(true);
     }
-    expect(engine.getStrokeCount()).toBe(10);
+    expect(engine.getMarkCount()).toBe(10);
   });
 });
 
@@ -109,12 +109,12 @@ describe('InkEngine page isolation', () => {
     engine.beginStroke(sample(30, 30), view);
     engine.endStroke();
 
-    expect(engine.getStrokeCount(1)).toBe(1);
-    expect(engine.getStrokeCount(2)).toBe(2);
+    expect(engine.getMarkCount(1)).toBe(1);
+    expect(engine.getMarkCount(2)).toBe(2);
 
     engine.undo(); // active page is 2
-    expect(engine.getStrokeCount(2)).toBe(1);
-    expect(engine.getStrokeCount(1)).toBe(1);
+    expect(engine.getMarkCount(2)).toBe(1);
+    expect(engine.getMarkCount(1)).toBe(1);
   });
 
   it('clears only the targeted page', () => {
@@ -127,8 +127,8 @@ describe('InkEngine page isolation', () => {
     engine.endStroke();
 
     engine.clearPage(1);
-    expect(engine.getStrokeCount(1)).toBe(0);
-    expect(engine.getStrokeCount(2)).toBe(1);
+    expect(engine.getMarkCount(1)).toBe(0);
+    expect(engine.getMarkCount(2)).toBe(1);
   });
 });
 
@@ -190,7 +190,7 @@ describe('InkEngine serialization', () => {
     };
     const engine = new InkEngine();
     engine.loadPage(1, [batch]);
-    expect(engine.getStrokeCount(1)).toBe(0);
+    expect(engine.getMarkCount(1)).toBe(0);
   });
 
   it('serialized strokes do not alias the live store (snapshot is a deep copy)', () => {
@@ -199,10 +199,82 @@ describe('InkEngine serialization', () => {
     engine.endStroke();
 
     const batch = engine.serializePage();
-    const firstPoint = batch.strokes[0]?.points[0];
-    if (firstPoint) firstPoint.x = -999;
+    const firstMark = batch.strokes[0];
+    if (firstMark && 'points' in firstMark) {
+      const firstPoint = firstMark.points[0];
+      if (firstPoint) firstPoint.x = -999;
+    }
 
     expect(engine.getPageStrokes()[0]?.points[0]?.x).not.toBe(-999);
+  });
+});
+
+describe('InkEngine stickers (F1.12)', () => {
+  const sticker = {
+    kind: 'sticker' as const,
+    sticker: 'star' as const,
+    x: 0.88,
+    y: 0.12,
+    size: 0.16,
+    rotation: 8,
+  };
+
+  it('places a sticker as a mark and reports it separately from strokes', () => {
+    const engine = new InkEngine();
+    engine.beginStroke(sample(100, 100), view);
+    engine.endStroke();
+
+    engine.placeSticker(sticker);
+
+    expect(engine.getMarkCount()).toBe(2);
+    expect(engine.getPageStrokes()).toHaveLength(1);
+    expect(engine.getPageStickers()).toHaveLength(1);
+    expect(engine.getPageStickers()[0]).toMatchObject({ sticker: 'star', x: 0.88 });
+  });
+
+  it('emits a commit carrying the sticker mark', () => {
+    const engine = new InkEngine();
+    const listener = vi.fn();
+    engine.onChange(listener);
+    engine.placeSticker(sticker);
+    expect(listener).toHaveBeenCalledWith({
+      type: 'commit',
+      pageNumber: 1,
+      mark: expect.objectContaining({ kind: 'sticker', sticker: 'star' }),
+    });
+  });
+
+  it('undo pops a sticker or a stroke in true draw order', () => {
+    const engine = new InkEngine();
+    engine.beginStroke(sample(100, 100), view);
+    engine.endStroke();
+    engine.placeSticker(sticker); // most recent
+
+    engine.undo();
+    expect(engine.getPageStickers()).toHaveLength(0);
+    expect(engine.getPageStrokes()).toHaveLength(1);
+  });
+
+  it('round-trips stickers through serialize -> load', () => {
+    const source = new InkEngine();
+    source.placeSticker(sticker);
+    source.beginStroke(sample(200, 200), view);
+    source.endStroke();
+
+    const restored = new InkEngine();
+    restored.loadPage(1, [source.serializePage(1)]);
+
+    expect(restored.getPageStickers()).toEqual(source.getPageStickers());
+    expect(restored.getPageStrokes()).toEqual(source.getPageStrokes());
+  });
+
+  it('does not alias the live store on serialize', () => {
+    const engine = new InkEngine();
+    engine.placeSticker(sticker);
+    const batch = engine.serializePage();
+    const mark = batch.strokes[0];
+    if (mark && mark.kind === 'sticker') mark.x = -1;
+    expect(engine.getPageStickers()[0]?.x).toBe(0.88);
   });
 });
 
@@ -223,7 +295,24 @@ describe('InkEngine load-path data safety', () => {
     const engine = new InkEngine();
     expect(() => engine.loadPage(1, [dirty])).not.toThrow();
     // The two well-formed strokes survive.
-    expect(engine.getStrokeCount(1)).toBe(2);
+    expect(engine.getMarkCount(1)).toBe(2);
+  });
+
+  it('skips malformed stickers but keeps valid ones', () => {
+    const dirty = {
+      version: STROKE_BATCH_VERSION,
+      pageNumber: 1,
+      strokes: [
+        { kind: 'sticker', sticker: 'star', x: 0.5, y: 0.5, size: 0.16, rotation: 0 },
+        { kind: 'sticker', sticker: 'unicorn', x: 0.1, y: 0.1 }, // invalid id
+        { kind: 'sticker', sticker: 'heart', x: 'nope', y: 0.2 }, // invalid coords
+      ],
+    } as unknown as StrokeBatch;
+
+    const engine = new InkEngine();
+    engine.loadPage(1, [dirty]);
+    expect(engine.getPageStickers()).toHaveLength(1);
+    expect(engine.getPageStickers()[0]?.sticker).toBe('star');
   });
 });
 
@@ -241,7 +330,7 @@ describe('InkEngine change notification', () => {
     expect(listener).toHaveBeenLastCalledWith({
       type: 'commit',
       pageNumber: 1,
-      stroke: committed,
+      mark: committed,
     });
 
     engine.undo();
@@ -276,6 +365,6 @@ describe('InkEngine change notification', () => {
     const committed = engine.endStroke();
 
     expect(committed?.points).toHaveLength(64);
-    expect(engine.getStrokeCount()).toBe(1);
+    expect(engine.getMarkCount()).toBe(1);
   });
 });

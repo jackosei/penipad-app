@@ -13,6 +13,7 @@
  */
 import type { InkEngine, InkEvent } from './ink';
 import { renderStroke, renderStrokes, type RenderTarget } from './renderer';
+import { isSticker } from './stickers';
 import type { PageSize } from './geometry';
 
 type Scheduler = (callback: () => void) => void;
@@ -97,9 +98,11 @@ export class InkSurface {
     if (event.pageNumber !== this.engine.getActivePage()) return;
     switch (event.type) {
       case 'commit': {
+        // Stickers render in the DOM overlay, not on the ink canvas.
+        if (isSticker(event.mark)) break;
         // Incremental: paint just the new stroke onto the committed layer.
         const ctx = this.committedCanvas.getContext('2d');
-        if (ctx) renderStroke(ctx, event.stroke, this.pageSize);
+        if (ctx) renderStroke(ctx, event.mark, this.pageSize);
         this.scheduleLiveFrame(); // clears the now-committed live stroke
         break;
       }

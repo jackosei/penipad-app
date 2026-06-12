@@ -61,7 +61,7 @@ describe('attachInkInput', () => {
     target.dispatchEvent(pointerEvent('pointermove', { clientX: 200, clientY: 220 }));
     target.dispatchEvent(pointerEvent('pointerup', { clientX: 200, clientY: 220 }));
 
-    expect(engine.getStrokeCount()).toBe(1);
+    expect(engine.getMarkCount()).toBe(1);
     const stroke = engine.getPageStrokes()[0];
     expect(stroke?.points[0]).toMatchObject({ x: 0.1, y: 0.1 });
     expect(stroke?.points[1]).toMatchObject({ x: 0.2, y: 0.22 });
@@ -90,7 +90,7 @@ describe('attachInkInput', () => {
     target.dispatchEvent(pointerEvent('pointerdown', { pointerId: 2 }));
 
     expect(engine.getCurrentStroke()).toBeNull();
-    expect(engine.getStrokeCount()).toBe(0);
+    expect(engine.getMarkCount()).toBe(0);
 
     // No new stroke can start while pointers are still down.
     target.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 300 }));
@@ -115,7 +115,7 @@ describe('attachInkInput', () => {
     target.dispatchEvent(pointerEvent('pointermove', { clientX: 300, clientY: 300 }));
     target.dispatchEvent(pointerEvent('pointercancel'));
 
-    expect(engine.getStrokeCount()).toBe(1);
+    expect(engine.getMarkCount()).toBe(1);
   });
 
   it('stops handling events after detach', () => {

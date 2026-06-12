@@ -29,23 +29,53 @@ export type StrokePoint = { x: number; y: number; pressure: number };
  * `size` is normalized to the page's reference axis (width), so stroke
  * thickness is resolution- and zoom-independent: it renders the same on a
  * phone and a tablet. `color` is a CSS color string; the eraser ignores it.
+ *
+ * `kind` is the optional discriminant for the PageMark union. It is omitted on
+ * strokes written before stickers existed, so absence means "stroke".
  */
 export type Stroke = {
+  kind?: 'stroke';
   tool: ToolId;
   color: string;
   size: number;
   points: StrokePoint[];
 };
 
+/** The celebration stickers (F1.12). Cosmetic only; nothing unlocks. */
+export type StickerId = 'star' | 'heart' | 'smile' | 'thumb' | 'flower' | 'rainbow';
+
+/**
+ * A placed sticker: a page decoration earned by tapping "Done" (F1.12).
+ * Position and size are normalized to the page (like strokes), so it lands in
+ * the same spot at any zoom or screen size. Persisted as a mark alongside
+ * strokes; Phase 2 adds a separate sticker-book collection without migrating
+ * these page decorations.
+ */
+export type Sticker = {
+  kind: 'sticker';
+  sticker: StickerId;
+  /** Normalized center, 0..1. */
+  x: number;
+  y: number;
+  /** Normalized to page width, like Stroke.size. */
+  size: number;
+  /** Degrees, for a playful tilt. */
+  rotation: number;
+};
+
+/** Anything that lives on a page in draw order: a stroke or a sticker. */
+export type PageMark = Stroke | Sticker;
+
 /**
  * The append-only, versioned unit of persistence for one page.
  *
- * A page's ink state is the ordered reduction (concatenation) of its batches'
- * strokes. Batches are never mutated in place; new ink is a new batch. The
- * `version` field lets future readers migrate older serializations.
+ * A page's state is the ordered reduction (concatenation) of its batches'
+ * marks. Batches are never mutated in place; new ink is a new batch. The
+ * `version` field lets future readers migrate older serializations. The field
+ * is named `strokes` for wire stability (it predates stickers); it holds marks.
  */
 export type StrokeBatch = {
   version: 1;
   pageNumber: number;
-  strokes: Stroke[];
+  strokes: PageMark[];
 };

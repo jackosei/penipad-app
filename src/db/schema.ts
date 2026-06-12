@@ -15,7 +15,7 @@
  * transaction that preserves the reduction result.
  */
 import Dexie, { type Table } from 'dexie';
-import type { Stroke } from '@/types/ink';
+import type { PageMark } from '@/types/ink';
 import type { STROKE_BATCH_VERSION } from '@/engine';
 
 /**
@@ -71,7 +71,7 @@ export type PageRow = {
   updated_at: number;
 };
 
-/** One committed stroke, in normalized page coordinates. Append-only. */
+/** One batch of committed marks (strokes or stickers). Append-only. */
 export type StrokeBatchRow = {
   id: string;
   activity_id: string;
@@ -79,7 +79,7 @@ export type StrokeBatchRow = {
   /** Monotonic per (activity_id, page_number); reduction order. */
   seq: number;
   version: typeof STROKE_BATCH_VERSION;
-  strokes: Stroke[];
+  strokes: PageMark[];
   created_at: number;
 };
 

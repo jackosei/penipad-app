@@ -364,7 +364,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
+  /* Breathing room so the worksheet never touches the top edge or the tray.
+     Extra top room clears the back and Done buttons. */
+  padding: 76px 16px 16px;
 }
 
 .canvas-stack {
@@ -387,6 +389,88 @@ button {
 .canvas-stack__layer--input {
   /* The browser never claims single-finger gestures over the page. */
   touch-action: none;
+}
+
+/* ---------- sticker overlay (F1.12) ---------- */
+
+.sticker-layer {
+  position: absolute;
+  inset: 0;
+  /* Decorative only: pointers pass through to the ink canvas beneath. */
+  pointer-events: none;
+}
+
+.sticker-layer__item {
+  position: absolute;
+  display: block;
+  animation: sticker-pop 0.32s var(--spring);
+}
+
+.sticker-layer__art {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 3px rgba(51, 65, 92, 0.25));
+}
+
+@keyframes sticker-pop {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(0.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ---------- Done button + confetti ---------- */
+
+.done-button {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 60px;
+  height: 60px;
+  border-radius: 20px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 0 var(--accent-shadow);
+  transition: transform 0.08s ease;
+  z-index: 10;
+}
+
+.done-button:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.confetti__piece {
+  position: absolute;
+  top: -24px;
+  border-radius: 3px;
+  opacity: 0;
+  animation: confetti-fall 1.4s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) translateX(var(--drift, 0)) rotate(var(--spin, 360deg));
+    opacity: 0;
+  }
 }
 
 /* ---------- page navigation ---------- */

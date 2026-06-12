@@ -10,7 +10,7 @@
 import Dexie from 'dexie';
 import { db } from './schema';
 import type { ActivityRow, DocumentRow, PageRow, StoredImage } from './schema';
-import type { Stroke, StrokeBatch } from '@/types/ink';
+import type { PageMark, StrokeBatch } from '@/types/ink';
 import { STROKE_BATCH_VERSION } from '@/engine';
 
 // --- documents -----------------------------------------------------------------
@@ -131,7 +131,7 @@ function pageRange(activityId: string, pageNumber: number): [unknown[], unknown[
 export function appendStrokeBatch(
   activityId: string,
   pageNumber: number,
-  strokes: Stroke[],
+  marks: PageMark[],
 ): Promise<string> {
   return db.transaction('rw', [db.stroke_batches, db.pages, db.activities], async () => {
     const [lower, upper] = pageRange(activityId, pageNumber);
@@ -147,7 +147,7 @@ export function appendStrokeBatch(
       page_number: pageNumber,
       seq: (last?.seq ?? 0) + 1,
       version: STROKE_BATCH_VERSION,
-      strokes,
+      strokes: marks,
       created_at: now,
     });
     await upsertPage(activityId, pageNumber, now);

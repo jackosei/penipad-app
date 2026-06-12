@@ -69,12 +69,12 @@ describe('Toolbar', () => {
     const view = { originX: 0, originY: 0, width: 1000, height: 1000 };
     engine.beginStroke({ x: 10, y: 10, pressure: 0.5 }, view);
     engine.endStroke();
-    expect(engine.getStrokeCount()).toBe(1);
+    expect(engine.getMarkCount()).toBe(1);
 
     render(<Toolbar engine={engine} />);
     fireEvent.click(screen.getByRole('button', { name: 'undo' }));
 
-    expect(engine.getStrokeCount()).toBe(0);
+    expect(engine.getMarkCount()).toBe(0);
   });
 
   it('contains no visible text, only icons (child zone rule)', () => {

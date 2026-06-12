@@ -8,10 +8,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from './schema';
 import { startAutosave, type VisibilityTarget } from './autosave';
 import { addDocument, getOrCreateActivity, loadPageStrokeBatches } from './queries';
-import { InkEngine } from '@/engine';
+import { InkEngine, isStroke } from '@/engine';
 import type { Viewport } from '@/engine';
+import type { StrokeBatch } from '@/types/ink';
 
 const view: Viewport = { originX: 0, originY: 0, width: 1000, height: 1000 };
+
+/** First stroke's first-point x in a batch (tests deal in stroke marks). */
+function firstPointX(batch: StrokeBatch | undefined): number | undefined {
+  const mark = batch?.strokes[0];
+  return mark && isStroke(mark) ? mark.points[0]?.x : undefined;
+}
 
 /** A controllable stand-in for document visibility. */
 function fakeVisibility(): VisibilityTarget & { hide: () => void } {
@@ -66,8 +73,8 @@ describe('startAutosave', () => {
 
     const batches = await loadPageStrokeBatches(activityId, 1);
     expect(batches).toHaveLength(2);
-    expect(batches[0]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.1);
-    expect(batches[1]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.3);
+    expect(firstPointX(batches[0])).toBeCloseTo(0.1);
+    expect(firstPointX(batches[1])).toBeCloseTo(0.3);
 
     await autosave.dispose();
   });
@@ -84,7 +91,7 @@ describe('startAutosave', () => {
 
     const batches = await loadPageStrokeBatches(activityId, 1);
     expect(batches).toHaveLength(1);
-    expect(batches[0]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.5);
+    expect(firstPointX(batches[0])).toBeCloseTo(0.5);
 
     await autosave.dispose();
   });
@@ -112,12 +119,12 @@ describe('startAutosave', () => {
     // Finger still down: stroke not yet committed.
     engine.beginStroke({ x: 100, y: 100, pressure: 0.5 }, view);
     engine.appendSamples([{ x: 200, y: 200, pressure: 0.6 }], view);
-    expect(engine.getStrokeCount()).toBe(0);
+    expect(engine.getMarkCount()).toBe(0);
 
     visibility.hide();
     await autosave.flush();
 
-    expect(engine.getStrokeCount()).toBe(1);
+    expect(engine.getMarkCount()).toBe(1);
     const batches = await loadPageStrokeBatches(activityId, 1);
     expect(batches).toHaveLength(1);
 
@@ -150,7 +157,7 @@ describe('startAutosave', () => {
     expect(onError).toHaveBeenCalledOnce();
     const batches = await loadPageStrokeBatches(activityId, 1);
     expect(batches).toHaveLength(1);
-    expect(batches[0]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.7);
+    expect(firstPointX(batches[0])).toBeCloseTo(0.7);
 
     await autosave.dispose();
   });

@@ -12,8 +12,9 @@
  * `loadPage` reduces many batches back into strokes. Reconciling undo with
  * append-only storage (tombstones vs. rewrite) is a Step 4 concern.
  */
-import type { Stroke, StrokeBatch, StrokePoint, ToolId } from '@/types/ink';
+import type { PageMark, Sticker, Stroke, StrokeBatch, StrokePoint, ToolId } from '@/types/ink';
 import { isToolId } from './tools';
+import { isSticker, isStickerId, isStroke } from './stickers';
 import type { Viewport } from './geometry';
 
 /** Version stamped onto serialized batches. Bump when the shape changes. */
@@ -25,11 +26,11 @@ export type PointerSample = { x: number; y: number; pressure: number };
 /**
  * Committed-state change notifications. Each event carries enough payload for
  * a persistence layer to mirror the change without re-reading engine state
- * (a commit carries the committed stroke). The in-progress stroke never emits:
+ * (a commit carries the committed mark). The in-progress stroke never emits:
  * the hot path stays quiet.
  */
 export type InkEvent =
-  | { type: 'commit'; pageNumber: number; stroke: Stroke }
+  | { type: 'commit'; pageNumber: number; mark: PageMark }
   | { type: 'undo'; pageNumber: number }
   | { type: 'clear'; pageNumber: number }
   | { type: 'load'; pageNumber: number };
@@ -43,7 +44,7 @@ const MIN_SIZE = 0.001;
 const MAX_SIZE = 0.2;
 const FIRST_PAGE = 1;
 
-const EMPTY_STROKES: readonly Stroke[] = Object.freeze([]);
+const EMPTY_MARKS: readonly PageMark[] = Object.freeze([]);
 
 /** Clamp pressure into [0, 1]; absent or NaN pressure becomes a neutral 0.5. */
 function normalizePressure(pressure: number): number {
@@ -51,25 +52,22 @@ function normalizePressure(pressure: number): number {
   return pressure > 1 ? 1 : pressure;
 }
 
-/** Deep-copy a stroke so stored and serialized strokes never alias. */
-function cloneStroke(stroke: Stroke): Stroke {
+/** Deep-copy a mark so stored and serialized marks never alias. */
+function cloneMark(mark: PageMark): PageMark {
+  if (isSticker(mark)) {
+    return { ...mark };
+  }
   return {
-    tool: stroke.tool,
-    color: stroke.color,
-    size: stroke.size,
-    points: stroke.points.map((p) => ({ x: p.x, y: p.y, pressure: p.pressure })),
+    ...(mark.kind ? { kind: mark.kind } : {}),
+    tool: mark.tool,
+    color: mark.color,
+    size: mark.size,
+    points: mark.points.map((p) => ({ x: p.x, y: p.y, pressure: p.pressure })),
   };
 }
 
-/**
- * Defensively reconstruct a stroke from untrusted data (e.g. a corrupt record
- * read from IndexedDB). Returns null rather than throwing, so one bad stroke
- * can never take down a whole page load. This protects the never-lose-a-drawing
- * guarantee on the read path.
- */
-function sanitizeStroke(value: unknown): Stroke | null {
-  if (typeof value !== 'object' || value === null) return null;
-  const record = value as Record<string, unknown>;
+/** Reconstruct a stroke from untrusted data, or null if unusable. */
+function sanitizeStroke(record: Record<string, unknown>): Stroke | null {
   if (!isToolId(record.tool)) return null;
   if (!Array.isArray(record.points)) return null;
 
@@ -88,12 +86,33 @@ function sanitizeStroke(value: unknown): Stroke | null {
   return { tool: record.tool, color, size, points };
 }
 
+/** Reconstruct a sticker from untrusted data, or null if unusable. */
+function sanitizeSticker(record: Record<string, unknown>): Sticker | null {
+  if (!isStickerId(record.sticker)) return null;
+  if (typeof record.x !== 'number' || typeof record.y !== 'number') return null;
+  const size = typeof record.size === 'number' && record.size > 0 ? record.size : 0.16;
+  const rotation = typeof record.rotation === 'number' ? record.rotation : 0;
+  return { kind: 'sticker', sticker: record.sticker, x: record.x, y: record.y, size, rotation };
+}
+
+/**
+ * Defensively reconstruct a mark from untrusted data (e.g. a corrupt record
+ * read from IndexedDB). Returns null rather than throwing, so one bad mark can
+ * never take down a whole page load. Protects the never-lose-a-drawing
+ * guarantee on the read path.
+ */
+function sanitizeMark(value: unknown): PageMark | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const record = value as Record<string, unknown>;
+  return record.kind === 'sticker' ? sanitizeSticker(record) : sanitizeStroke(record);
+}
+
 /**
  * The framework-agnostic ink engine. One instance backs the whole drawing
- * surface; the active page selects which stroke list input and undo target.
+ * surface; the active page selects which mark list input and undo target.
  */
 export class InkEngine {
-  private readonly pages = new Map<number, Stroke[]>();
+  private readonly pages = new Map<number, PageMark[]>();
   private readonly listeners = new Set<InkEventListener>();
 
   private activePage = FIRST_PAGE;
@@ -172,8 +191,8 @@ export class InkEngine {
     const stroke = this.current;
     this.current = null;
     if (!stroke || stroke.points.length === 0) return null;
-    this.strokesFor(this.activePage).push(stroke);
-    this.emit({ type: 'commit', pageNumber: this.activePage, stroke });
+    this.marksFor(this.activePage).push(stroke);
+    this.emit({ type: 'commit', pageNumber: this.activePage, mark: stroke });
     return stroke;
   }
 
@@ -186,18 +205,32 @@ export class InkEngine {
     return this.current;
   }
 
+  // --- stickers (F1.12) ----------------------------------------------------
+
+  /**
+   * Place a sticker on the active page as the next mark. Commits immediately
+   * (there is no in-progress phase) and emits a commit so it persists and
+   * renders. Returns the placed sticker.
+   */
+  placeSticker(sticker: Sticker): Sticker {
+    const mark = cloneMark(sticker) as Sticker;
+    this.marksFor(this.activePage).push(mark);
+    this.emit({ type: 'commit', pageNumber: this.activePage, mark });
+    return mark;
+  }
+
   // --- history -------------------------------------------------------------
 
-  /** Pop the most recent stroke from the active page. Returns false if empty. */
+  /** Pop the most recent mark (stroke or sticker) from the active page. */
   undo(): boolean {
-    const strokes = this.pages.get(this.activePage);
-    if (!strokes || strokes.length === 0) return false;
-    strokes.pop();
+    const marks = this.pages.get(this.activePage);
+    if (!marks || marks.length === 0) return false;
+    marks.pop();
     this.emit({ type: 'undo', pageNumber: this.activePage });
     return true;
   }
 
-  /** Remove every stroke from a page. */
+  /** Remove every mark from a page. */
   clearPage(pageNumber: number = this.activePage): void {
     this.pages.set(pageNumber, []);
     this.emit({ type: 'clear', pageNumber });
@@ -205,41 +238,53 @@ export class InkEngine {
 
   // --- reads ---------------------------------------------------------------
 
-  getPageStrokes(pageNumber: number = this.activePage): readonly Stroke[] {
-    return this.pages.get(pageNumber) ?? EMPTY_STROKES;
+  /** Every mark on a page in draw order (strokes and stickers). */
+  getPageMarks(pageNumber: number = this.activePage): readonly PageMark[] {
+    return this.pages.get(pageNumber) ?? EMPTY_MARKS;
   }
 
-  getStrokeCount(pageNumber: number = this.activePage): number {
+  /** Only the strokes on a page, for canvas rendering. */
+  getPageStrokes(pageNumber: number = this.activePage): readonly Stroke[] {
+    return (this.pages.get(pageNumber) ?? EMPTY_MARKS).filter(isStroke);
+  }
+
+  /** Only the stickers on a page, for the sticker overlay. */
+  getPageStickers(pageNumber: number = this.activePage): readonly Sticker[] {
+    return (this.pages.get(pageNumber) ?? EMPTY_MARKS).filter(isSticker);
+  }
+
+  /** Total marks on a page (strokes plus stickers). */
+  getMarkCount(pageNumber: number = this.activePage): number {
     return this.pages.get(pageNumber)?.length ?? 0;
   }
 
   // --- serialization -------------------------------------------------------
 
-  /** Snapshot a page's strokes into a single compacted, versioned batch. */
+  /** Snapshot a page's marks into a single compacted, versioned batch. */
   serializePage(pageNumber: number = this.activePage): StrokeBatch {
-    const strokes = this.pages.get(pageNumber) ?? [];
+    const marks = this.pages.get(pageNumber) ?? [];
     return {
       version: STROKE_BATCH_VERSION,
       pageNumber,
-      strokes: strokes.map(cloneStroke),
+      strokes: marks.map(cloneMark),
     };
   }
 
   /**
-   * Replace a page's strokes with the ordered reduction of the given batches.
-   * Only batches matching `pageNumber` contribute; malformed strokes are
-   * skipped rather than throwing.
+   * Replace a page's marks with the ordered reduction of the given batches.
+   * Only batches matching `pageNumber` contribute; malformed marks are skipped
+   * rather than throwing.
    */
   loadPage(pageNumber: number, batches: readonly StrokeBatch[]): void {
-    const strokes: Stroke[] = [];
+    const marks: PageMark[] = [];
     for (const batch of batches) {
       if (batch.pageNumber !== pageNumber || !Array.isArray(batch.strokes)) continue;
       for (const raw of batch.strokes) {
-        const stroke = sanitizeStroke(raw);
-        if (stroke) strokes.push(stroke);
+        const mark = sanitizeMark(raw);
+        if (mark) marks.push(mark);
       }
     }
-    this.pages.set(pageNumber, strokes);
+    this.pages.set(pageNumber, marks);
     this.emit({ type: 'load', pageNumber });
   }
 
@@ -254,13 +299,13 @@ export class InkEngine {
 
   // --- internals -----------------------------------------------------------
 
-  private strokesFor(pageNumber: number): Stroke[] {
-    let strokes = this.pages.get(pageNumber);
-    if (!strokes) {
-      strokes = [];
-      this.pages.set(pageNumber, strokes);
+  private marksFor(pageNumber: number): PageMark[] {
+    let marks = this.pages.get(pageNumber);
+    if (!marks) {
+      marks = [];
+      this.pages.set(pageNumber, marks);
     }
-    return strokes;
+    return marks;
   }
 
   private toStrokePoint(sample: PointerSample, view: Viewport): StrokePoint {

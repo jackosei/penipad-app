@@ -14,6 +14,8 @@ export type { RenderTarget } from './renderer';
 export { TOOL_CONFIGS, TOOL_IDS, isToolId } from './tools';
 export type { ToolConfig, ToolPass } from './tools';
 
+export { STICKER_IDS, isStickerId, isSticker, isStroke } from './stickers';
+
 export { clamp01, toNormPoint, toPixel, buildOutline, traceOutline } from './geometry';
 export type { Viewport, PageSize, PathSink } from './geometry';
 

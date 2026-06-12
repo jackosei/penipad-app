@@ -23,8 +23,14 @@ import {
   updateActivityLastPage,
   getActivity,
 } from './queries';
-import { InkEngine } from '@/engine';
-import type { Stroke } from '@/types/ink';
+import { InkEngine, isStroke } from '@/engine';
+import type { Stroke, StrokeBatch } from '@/types/ink';
+
+/** First stroke's first-point x in a batch (tests deal in stroke marks). */
+function firstPointX(batch: StrokeBatch | undefined): number | undefined {
+  const mark = batch?.strokes[0];
+  return mark && isStroke(mark) ? mark.points[0]?.x : undefined;
+}
 
 function stroke(seed = 1): Stroke {
   return {
@@ -192,8 +198,8 @@ describe('stroke batches', () => {
     expect(batches).toHaveLength(2);
     expect(batches[0]?.pageNumber).toBe(1);
     expect(batches[0]?.version).toBe(1);
-    expect(batches[0]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.1);
-    expect(batches[1]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.2);
+    expect(firstPointX(batches[0])).toBeCloseTo(0.1);
+    expect(firstPointX(batches[1])).toBeCloseTo(0.2);
   });
 
   it('round-trips a page through the engine with zero loss', async () => {
@@ -222,7 +228,7 @@ describe('stroke batches', () => {
 
     const remaining = await loadPageStrokeBatches(activityId, 1);
     expect(remaining).toHaveLength(1);
-    expect(remaining[0]?.strokes[0]?.points[0]?.x).toBeCloseTo(0.1);
+    expect(firstPointX(remaining[0])).toBeCloseTo(0.1);
   });
 
   it('undo on an empty page reports false and changes nothing', async () => {
@@ -245,5 +251,25 @@ describe('stroke batches', () => {
     await appendStrokeBatch(activityId, 1, [stroke()]);
 
     expect(await listInkedPageNumbers(activityId)).toEqual([1, 3]);
+  });
+
+  it('persists a sticker mark alongside strokes (F1.12)', async () => {
+    const sticker = {
+      kind: 'sticker' as const,
+      sticker: 'star' as const,
+      x: 0.9,
+      y: 0.1,
+      size: 0.16,
+      rotation: 6,
+    };
+    await appendStrokeBatch(activityId, 1, [stroke(1)]);
+    await appendStrokeBatch(activityId, 1, [sticker]);
+
+    const engine = new InkEngine();
+    engine.loadPage(1, await loadPageStrokeBatches(activityId, 1));
+
+    expect(engine.getPageStrokes()).toHaveLength(1);
+    expect(engine.getPageStickers()).toHaveLength(1);
+    expect(engine.getPageStickers()[0]).toMatchObject({ sticker: 'star', x: 0.9 });
   });
 });

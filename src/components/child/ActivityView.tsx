@@ -11,6 +11,8 @@ import type { InkEngine } from '@/engine';
 import type { PdfDocumentHandle } from '@/pdf/loader';
 import { Toolbar } from './Toolbar';
 import { PageNav } from './PageNav';
+import { DoneButton } from './DoneButton';
+import { StickerLayer } from './StickerLayer';
 import { BackIcon } from '@/components/shared/icons';
 
 export type ActivityViewProps = {
@@ -84,12 +86,14 @@ function DrawingScreen({
       <button type="button" className="activity__back" aria-label="back to shelf" onClick={onBack}>
         <BackIcon />
       </button>
+      <DoneButton engine={engine} />
 
       <div className="activity__page-area" ref={containerRef}>
         <div className="canvas-stack" style={stackStyle}>
           <canvas ref={pdfCanvasRef} className="canvas-stack__layer" />
           <canvas ref={committedCanvasRef} className="canvas-stack__layer" />
           <canvas ref={liveCanvasRef} className="canvas-stack__layer canvas-stack__layer--input" />
+          <StickerLayer engine={engine} page={currentPage} />
         </div>
         <PageNav currentPage={currentPage} pageCount={pageCount} onNavigate={onNavigate} />
       </div>
