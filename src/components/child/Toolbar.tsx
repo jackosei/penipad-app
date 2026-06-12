@@ -16,6 +16,7 @@ import { BRUSH_SIZES } from '@/constants';
 import { brushSizeFor, useActivityUiStore } from '@/store/activity';
 import { ColorPicker } from './ColorPicker';
 import { DoneButton } from './DoneButton';
+import { WipeButton } from './WipeButton';
 
 const TOOL_ICONS: Record<ToolId, LucideIcon> = {
   crayon: Brush,
@@ -93,7 +94,10 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
 
       <span className="tray__divider" aria-hidden />
 
-      <DoneButton engine={engine} />
+      <div className="tray__group">
+        <WipeButton engine={engine} />
+        <DoneButton engine={engine} />
+      </div>
     </div>
   );
 }

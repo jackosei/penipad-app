@@ -1,16 +1,19 @@
 /**
- * The "Done" affordance (F1.12): a big green button in the tray. Tapping it
- * marks the page complete: it drops one celebration sticker and fires confetti.
+ * The "Done" affordance (F1.12): a green square in the tray, sized like the
+ * other tools so the row never wraps. Tapping it asks first (icon-only
+ * KidConfirm with a star), then celebrates: one sticker drops on the page and
+ * confetti fires.
  *
- * Bounded by design: at most one sticker per page (idempotent). Repeated taps
- * re-fire the confetti for the joy of it but never spawn a second sticker, so
- * the page can't be flooded. Manual, no correctness logic; that arrives with
- * answer zones in Phase 3.
+ * Bounded by design: at most one sticker per page (idempotent). Confirmed
+ * repeat taps re-fire confetti for the joy of it but never spawn a second
+ * sticker. Manual, no correctness logic; that arrives with answer zones in
+ * Phase 3.
  */
 import { useState, type JSX } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Star } from 'lucide-react';
 import type { InkEngine } from '@/engine';
 import { createCelebrationSticker } from '@/utils/sticker-placement';
+import { KidConfirm } from './KidConfirm';
 import { Confetti } from './Confetti';
 
 function prefersReducedMotion(): boolean {
@@ -26,9 +29,11 @@ export type DoneButtonProps = {
 };
 
 export function DoneButton({ engine }: DoneButtonProps): JSX.Element {
+  const [confirming, setConfirming] = useState(false);
   const [burst, setBurst] = useState(0);
 
   const celebrate = (): void => {
+    setConfirming(false);
     // One sticker per page: only place if the page has no celebration yet.
     if (engine.getPageStickers().length === 0) {
       engine.placeSticker(createCelebrationSticker(0));
@@ -38,9 +43,24 @@ export function DoneButton({ engine }: DoneButtonProps): JSX.Element {
 
   return (
     <>
-      <button type="button" className="done-button" aria-label="done" onClick={celebrate}>
-        <Check size={32} aria-hidden />
+      <button
+        type="button"
+        className="done-button"
+        aria-label="done"
+        onClick={() => setConfirming(true)}
+      >
+        <Check size={30} aria-hidden />
       </button>
+
+      {confirming && (
+        <KidConfirm
+          label="finished with this page?"
+          subject={<Star size={64} aria-hidden fill="#FFC92A" color="#E0A800" />}
+          onConfirm={celebrate}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
+
       {burst > 0 && <Confetti key={burst} />}
     </>
   );

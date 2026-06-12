@@ -53,4 +53,8 @@ describe('TOOL_CONFIGS', () => {
     expect(eraser.passes[0]?.composite).toBe('destination-out');
     expect(eraser.usesColor).toBe(false);
   });
+
+  it('erases wide: a sweeping gesture, not a pen line', () => {
+    expect(TOOL_CONFIGS.eraser.sizeScale).toBeGreaterThan(2);
+  });
 });

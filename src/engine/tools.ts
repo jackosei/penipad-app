@@ -95,7 +95,9 @@ export const TOOL_CONFIGS: Record<ToolId, ToolConfig> = {
   eraser: {
     id: 'eraser',
     usesColor: false,
-    sizeScale: 1,
+    // Wide by intent (mockup used 2.4x): erasing is a sweeping gesture, and a
+    // pen-width eraser forces kids to fall back on undo.
+    sizeScale: 2.4,
     strokeOptions: {
       thinning: 0,
       smoothing: 0.5,

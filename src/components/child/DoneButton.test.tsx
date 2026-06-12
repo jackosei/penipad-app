@@ -11,22 +11,39 @@ describe('DoneButton (F1.12)', () => {
     engine = new InkEngine();
   });
 
-  it('places a sticker on the active page when tapped', () => {
-    render(<DoneButton engine={engine} />);
-    expect(engine.getPageStickers()).toHaveLength(0);
-
+  /** Tap Done, then confirm via the icon-only yes button. */
+  function tapDoneAndConfirm(): void {
     fireEvent.click(screen.getByRole('button', { name: 'done' }));
+    fireEvent.click(screen.getByRole('button', { name: 'yes' }));
+  }
 
+  it('asks first, then places a sticker on the active page', () => {
+    render(<DoneButton engine={engine} />);
+    fireEvent.click(screen.getByRole('button', { name: 'done' }));
+    // Nothing happens until the child confirms.
+    expect(engine.getPageStickers()).toHaveLength(0);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'yes' }));
     expect(engine.getPageStickers()).toHaveLength(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('is bounded: repeated taps never spawn more than one sticker per page', () => {
+  it('cancelling the confirm places nothing', () => {
     render(<DoneButton engine={engine} />);
-    const button = screen.getByRole('button', { name: 'done' });
+    fireEvent.click(screen.getByRole('button', { name: 'done' }));
+    fireEvent.click(screen.getByRole('button', { name: 'no' }));
 
-    fireEvent.click(button);
-    fireEvent.click(button);
-    fireEvent.click(button);
+    expect(engine.getPageStickers()).toHaveLength(0);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('is bounded: repeated confirms never spawn more than one sticker per page', () => {
+    render(<DoneButton engine={engine} />);
+
+    tapDoneAndConfirm();
+    tapDoneAndConfirm();
+    tapDoneAndConfirm();
 
     expect(engine.getPageStickers()).toHaveLength(1);
   });
