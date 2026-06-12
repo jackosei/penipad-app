@@ -3,34 +3,45 @@
  * worksheet is one tap on its cover. Importing and deleting are parent
  * actions and live behind the gate (see ImportControl).
  */
-import { useEffect, useMemo, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, type JSX } from 'react';
 import type { DocumentRow } from '@/db/schema';
 import { useDocuments } from '@/hooks/use-documents';
 import { useUiStore } from '@/store/ui';
 import { ImportControl } from '@/components/parent/ImportControl';
+import { Welcome } from './Welcome';
 import { PageIcon } from '@/components/shared/icons';
 
 export function Shelf(): JSX.Element {
   const { documents, loading, refresh } = useDocuments();
   const openActivity = useUiStore((s) => s.openActivity);
+  const onImported = useCallback(() => void refresh(), [refresh]);
+
+  if (loading) {
+    return (
+      <main className="shelf shelf--center">
+        <div className="spinner" aria-label="loading" />
+      </main>
+    );
+  }
+
+  if (documents.length === 0) {
+    return (
+      <main className="shelf shelf--center">
+        <Welcome>
+          <ImportControl variant="hero" onImported={onImported} />
+        </Welcome>
+      </main>
+    );
+  }
 
   return (
     <main className="shelf">
-      {!loading && documents.length === 0 && (
-        <div className="shelf__empty">
-          <PageIcon size={72} className="shelf__empty-icon" />
-          {/* Empty shelf is setup mode: parent-facing copy is acceptable here. */}
-          <p className="shelf__empty-text">Add a worksheet PDF to get started.</p>
-        </div>
-      )}
-
       <div className="shelf__grid">
         {documents.map((doc) => (
           <DocumentCard key={doc.id} document={doc} onOpen={() => openActivity(doc.id)} />
         ))}
       </div>
-
-      <ImportControl onImported={() => void refresh()} />
+      <ImportControl variant="fab" onImported={onImported} />
     </main>
   );
 }

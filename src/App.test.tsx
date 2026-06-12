@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { App } from '@/App';
 
 describe('App', () => {
-  it('renders the shelf with the empty state and a gated import affordance', async () => {
+  it('renders the welcome screen with a gated add affordance on first run', async () => {
     render(<App />);
 
-    expect(await screen.findByText('Add a worksheet PDF to get started.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'add worksheet' })).toBeInTheDocument();
+    expect(await screen.findByText(/let.s scribble/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add a worksheet/i })).toBeInTheDocument();
   });
 });

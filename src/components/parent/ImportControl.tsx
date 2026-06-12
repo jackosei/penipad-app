@@ -11,11 +11,13 @@ import { PlusIcon } from '@/components/shared/icons';
 
 export type ImportControlProps = {
   onImported: () => void;
+  /** 'fab' = corner button (shelf with content); 'hero' = labeled welcome CTA. */
+  variant?: 'fab' | 'hero';
 };
 
 type GateRequest = { kind: 'picker' } | { kind: 'dropped'; files: File[] };
 
-export function ImportControl({ onImported }: ImportControlProps): JSX.Element {
+export function ImportControl({ onImported, variant = 'fab' }: ImportControlProps): JSX.Element {
   const [gateRequest, setGateRequest] = useState<GateRequest | null>(null);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -84,17 +86,26 @@ export function ImportControl({ onImported }: ImportControlProps): JSX.Element {
     };
   }, []);
 
+  const requestPicker = (): void => setGateRequest({ kind: 'picker' });
+
   return (
     <>
-      <button
-        type="button"
-        className="import-button"
-        aria-label="add worksheet"
-        disabled={busy}
-        onClick={() => setGateRequest({ kind: 'picker' })}
-      >
-        {busy ? <span className="spinner spinner--small" aria-hidden /> : <PlusIcon />}
-      </button>
+      {variant === 'hero' ? (
+        <button type="button" className="import-cta" disabled={busy} onClick={requestPicker}>
+          {busy ? <span className="spinner spinner--small" aria-hidden /> : <PlusIcon size={24} />}
+          <span>Add a worksheet</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="import-button"
+          aria-label="add worksheet"
+          disabled={busy}
+          onClick={requestPicker}
+        >
+          {busy ? <span className="spinner spinner--small" aria-hidden /> : <PlusIcon />}
+        </button>
+      )}
 
       <input
         ref={inputRef}
