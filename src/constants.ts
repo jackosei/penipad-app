@@ -31,6 +31,27 @@ export const INK = {
   UNDO_HISTORY_MIN: 50,
 } as const;
 
+/**
+ * The 8-color child palette (F1.4). High-saturation, names irrelevant: the
+ * child picks by sight. Order matches the tray layout left to right.
+ */
+export const INK_PALETTE = [
+  '#E5484D', // red
+  '#F76B15', // orange
+  '#FFC53D', // yellow
+  '#46A758', // green
+  '#0090FF', // blue
+  '#8E4EC6', // purple
+  '#8D6E63', // brown
+  '#1B1B1F', // near-black
+] as const;
+
+/** Three brush sizes (F1.4), normalized to page width like Stroke.size. */
+export const BRUSH_SIZES = [0.008, 0.014, 0.024] as const;
+
+/** Parental gate (Phase 1, UI-only barrier): hold duration in milliseconds. */
+export const PARENT_GATE_HOLD_MS = 3000;
+
 /** Local persistence guardrails. */
 export const STORAGE = {
   /** Warn the parent once estimated usage crosses this, in bytes. */

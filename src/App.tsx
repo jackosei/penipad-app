@@ -1,12 +1,24 @@
 /**
- * App shell. Placeholder surface for Step 1 of the Phase 1 build sequence.
- * Real surfaces (shelf, canvas, parental gate) land in later steps.
+ * App shell: two-screen routing (shelf, activity) from the UI store, plus
+ * the parent notice banner overlay.
  */
+import type { JSX } from 'react';
+import { useUiStore } from '@/store/ui';
+import { Shelf } from '@/components/child/Shelf';
+import { ActivityView } from '@/components/child/ActivityView';
+import { ParentNotice } from '@/components/parent/ParentNotice';
+
 export function App(): JSX.Element {
+  const screen = useUiStore((s) => s.screen);
+
   return (
-    <main className="app-shell">
-      <h1 className="app-shell__title">Peni Pad</h1>
-      <p className="app-shell__subtitle">The Magic Crayon</p>
-    </main>
+    <>
+      {screen.name === 'shelf' ? (
+        <Shelf />
+      ) : (
+        <ActivityView key={screen.documentId} documentId={screen.documentId} />
+      )}
+      <ParentNotice />
+    </>
   );
 }

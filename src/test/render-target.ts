@@ -4,6 +4,7 @@
  * lets the latency gate exercise the full render path with no DOM canvas.
  */
 import type { RenderTarget } from '@/engine/renderer';
+import type { SurfaceCanvas, SurfaceContext } from '@/engine/surface';
 
 /** State captured at the moment of each `fill()`. */
 export type FillRecord = {
@@ -22,6 +23,7 @@ export class RecordingTarget implements RenderTarget {
   moveToCount = 0;
   quadraticCurveToCount = 0;
   closePathCount = 0;
+  clearRectCount = 0;
 
   save(): void {}
   restore(): void {}
@@ -48,5 +50,30 @@ export class RecordingTarget implements RenderTarget {
       alpha: this.globalAlpha,
       fillStyle: typeof this.fillStyle === 'string' ? this.fillStyle : '[non-string]',
     });
+  }
+
+  clearRect(): void {
+    this.clearRectCount += 1;
+  }
+
+  /** Reset recorded activity (counts and fills) without losing identity. */
+  reset(): void {
+    this.fills.length = 0;
+    this.beginPathCount = 0;
+    this.moveToCount = 0;
+    this.quadraticCurveToCount = 0;
+    this.closePathCount = 0;
+    this.clearRectCount = 0;
+  }
+}
+
+/** A SurfaceCanvas fake whose context records what was drawn. */
+export class FakeSurfaceCanvas implements SurfaceCanvas {
+  width = 0;
+  height = 0;
+  readonly ctx: RecordingTarget & SurfaceContext = new RecordingTarget();
+
+  getContext(_contextId: '2d'): SurfaceContext {
+    return this.ctx;
   }
 }

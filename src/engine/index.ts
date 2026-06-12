@@ -16,3 +16,9 @@ export type { ToolConfig, ToolPass } from './tools';
 
 export { clamp01, toNormPoint, toPixel, buildOutline, traceOutline } from './geometry';
 export type { Viewport, PageSize, PathSink } from './geometry';
+
+export { attachInkInput } from './input';
+export type { InkInputOptions } from './input';
+
+export { InkSurface } from './surface';
+export type { InkSurfaceOptions, SurfaceCanvas, SurfaceContext } from './surface';
