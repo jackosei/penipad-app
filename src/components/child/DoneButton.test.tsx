@@ -20,7 +20,7 @@ describe('DoneButton (F1.12)', () => {
     expect(engine.getPageStickers()).toHaveLength(1);
   });
 
-  it('adds a new sticker on each tap', () => {
+  it('is bounded: repeated taps never spawn more than one sticker per page', () => {
     render(<DoneButton engine={engine} />);
     const button = screen.getByRole('button', { name: 'done' });
 
@@ -28,7 +28,7 @@ describe('DoneButton (F1.12)', () => {
     fireEvent.click(button);
     fireEvent.click(button);
 
-    expect(engine.getPageStickers()).toHaveLength(3);
+    expect(engine.getPageStickers()).toHaveLength(1);
   });
 
   it('is icon-only (no text label in the child zone)', () => {

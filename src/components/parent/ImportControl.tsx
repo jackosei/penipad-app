@@ -5,9 +5,9 @@
  * initial bundle.
  */
 import { useCallback, useEffect, useRef, useState, type JSX } from 'react';
+import { Plus } from 'lucide-react';
 import { useUiStore } from '@/store/ui';
 import { HoldGate } from './HoldGate';
-import { PlusIcon } from '@/components/shared/icons';
 
 export type ImportControlProps = {
   onImported: () => void;
@@ -92,7 +92,11 @@ export function ImportControl({ onImported, variant = 'fab' }: ImportControlProp
     <>
       {variant === 'hero' ? (
         <button type="button" className="import-cta" disabled={busy} onClick={requestPicker}>
-          {busy ? <span className="spinner spinner--small" aria-hidden /> : <PlusIcon size={24} />}
+          {busy ? (
+            <span className="spinner spinner--small" aria-hidden />
+          ) : (
+            <Plus size={24} aria-hidden />
+          )}
           <span>Add a worksheet</span>
         </button>
       ) : (
@@ -103,7 +107,7 @@ export function ImportControl({ onImported, variant = 'fab' }: ImportControlProp
           disabled={busy}
           onClick={requestPicker}
         >
-          {busy ? <span className="spinner spinner--small" aria-hidden /> : <PlusIcon />}
+          {busy ? <span className="spinner spinner--small" aria-hidden /> : <Plus aria-hidden />}
         </button>
       )}
 

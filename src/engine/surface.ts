@@ -106,9 +106,12 @@ export class InkSurface {
         this.scheduleLiveFrame(); // clears the now-committed live stroke
         break;
       }
+      case 'redo':
       case 'undo':
       case 'clear':
       case 'load':
+        // A mark appeared or disappeared at the end of the list; full replay
+        // keeps the committed layer correct (stickers update via their overlay).
         this.replayCommitted();
         break;
     }

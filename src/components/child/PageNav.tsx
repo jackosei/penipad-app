@@ -4,7 +4,7 @@
  * see where they are in the book.
  */
 import type { JSX } from 'react';
-import { BackIcon, ForwardIcon } from '@/components/shared/icons';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type PageNavProps = {
   currentPage: number;
@@ -26,7 +26,7 @@ export function PageNav({ currentPage, pageCount, onNavigate }: PageNavProps): J
         disabled={currentPage <= 1}
         onClick={() => onNavigate(currentPage - 1)}
       >
-        <BackIcon />
+        <ChevronLeft aria-hidden />
       </button>
       <button
         type="button"
@@ -35,7 +35,7 @@ export function PageNav({ currentPage, pageCount, onNavigate }: PageNavProps): J
         disabled={currentPage >= pageCount}
         onClick={() => onNavigate(currentPage + 1)}
       >
-        <ForwardIcon />
+        <ChevronRight aria-hidden />
       </button>
       {pageCount <= MAX_DOTS && (
         <div className="page-dots" aria-hidden>

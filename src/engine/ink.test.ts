@@ -95,6 +95,102 @@ describe('InkEngine undo', () => {
   });
 });
 
+describe('InkEngine redo', () => {
+  function drawAt(engine: InkEngine, x: number): void {
+    engine.beginStroke(sample(x, x), view);
+    engine.endStroke();
+  }
+
+  it('redoes an undone mark, restoring the exact state', () => {
+    const engine = new InkEngine();
+    drawAt(engine, 10);
+    drawAt(engine, 20);
+
+    expect(engine.canUndo()).toBe(true);
+    expect(engine.canRedo()).toBe(false);
+
+    engine.undo();
+    expect(engine.getMarkCount()).toBe(1);
+    expect(engine.canRedo()).toBe(true);
+
+    expect(engine.redo()).toBe(true);
+    expect(engine.getMarkCount()).toBe(2);
+    expect(engine.canRedo()).toBe(false);
+  });
+
+  it('redo reverses several undos in the correct order', () => {
+    const engine = new InkEngine();
+    drawAt(engine, 10);
+    drawAt(engine, 20);
+    drawAt(engine, 30);
+
+    engine.undo();
+    engine.undo();
+    engine.redo();
+    engine.redo();
+
+    expect(engine.getMarkCount()).toBe(3);
+    const xs = engine.getPageStrokes().map((s) => s.points[0]?.x);
+    expect(xs).toEqual([0.01, 0.02, 0.03]);
+  });
+
+  it('a new mark clears the redo stack (redo history is invalidated)', () => {
+    const engine = new InkEngine();
+    drawAt(engine, 10);
+    engine.undo();
+    expect(engine.canRedo()).toBe(true);
+
+    drawAt(engine, 99); // new action
+    expect(engine.canRedo()).toBe(false);
+    expect(engine.redo()).toBe(false);
+  });
+
+  it('placing a sticker also clears the redo stack', () => {
+    const engine = new InkEngine();
+    drawAt(engine, 10);
+    engine.undo();
+    engine.placeSticker({
+      kind: 'sticker',
+      sticker: 'star',
+      x: 0.9,
+      y: 0.1,
+      size: 0.16,
+      rotation: 0,
+    });
+    expect(engine.canRedo()).toBe(false);
+  });
+
+  it('returns false and emits nothing when there is nothing to redo', () => {
+    const engine = new InkEngine();
+    const listener = vi.fn();
+    engine.onChange(listener);
+    expect(engine.redo()).toBe(false);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('emits a redo event carrying the restored mark', () => {
+    const engine = new InkEngine();
+    drawAt(engine, 10);
+    const listener = vi.fn();
+    engine.onChange(listener);
+    engine.undo();
+    engine.redo();
+    expect(listener).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'redo', pageNumber: 1 }),
+    );
+  });
+
+  it('keeps redo stacks isolated per page', () => {
+    const engine = new InkEngine();
+    engine.setActivePage(1);
+    drawAt(engine, 10);
+    engine.undo();
+
+    engine.setActivePage(2);
+    expect(engine.canRedo()).toBe(false); // page 2 has no redo history
+  });
+});
+
 describe('InkEngine page isolation', () => {
   it('keeps strokes and undo scoped to the active page', () => {
     const engine = new InkEngine();

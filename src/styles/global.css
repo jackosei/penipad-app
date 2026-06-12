@@ -429,39 +429,79 @@ button {
   animation: sticker-pop 0.32s var(--spring);
 }
 
-.sticker-layer__art {
-  display: block;
+/* A sticker is a colored badge with a white glyph: crisp and consistent. */
+.sticker-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  height: auto;
-  filter: drop-shadow(0 2px 3px rgba(51, 65, 92, 0.25));
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(51, 65, 92, 0.28);
+}
+
+.sticker-badge__glyph {
+  width: 62%;
+  height: 62%;
 }
 
 @keyframes sticker-pop {
   0% {
-    transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(0.2);
+    transform: translate(-50%, -50%) scale(0.2);
   }
+
   100% {
     transform: translate(-50%, -50%) scale(1);
   }
 }
 
-/* ---------- Done button + confetti ---------- */
+/* ---------- history controls (top bar undo/redo) ---------- */
 
-.done-button {
+.history-controls {
   position: fixed;
   top: 14px;
   right: 14px;
-  width: 60px;
-  height: 60px;
-  border-radius: 20px;
-  background: var(--accent);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.history-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 rgba(51, 65, 92, 0.12);
+  transition: transform 0.08s ease;
+}
+
+.history-button:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.history-button:disabled {
+  opacity: 0.4;
+}
+
+/* ---------- Done button (tray) + confetti ---------- */
+
+.done-button {
+  height: 58px;
+  min-width: 92px;
+  padding: 0 22px;
+  border-radius: 18px;
+  background: #2ed573;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 0 var(--accent-shadow);
+  box-shadow: 0 4px 0 #1fae5b;
   transition: transform 0.08s ease;
-  z-index: 10;
 }
 
 .done-button:active {
@@ -490,6 +530,7 @@ button {
     transform: translateY(0) translateX(0) rotate(0deg);
     opacity: 1;
   }
+
   100% {
     transform: translateY(105vh) translateX(var(--drift, 0)) rotate(var(--spin, 360deg));
     opacity: 0;
@@ -527,11 +568,11 @@ button {
 
 /* Hang the arrows half over the page edge, against the PDF. */
 .page-nav--prev {
-  left: -26px;
+  left: -100px;
 }
 
 .page-nav--next {
-  right: -26px;
+  right: -100px;
 }
 
 .page-dots {

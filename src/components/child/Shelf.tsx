@@ -7,9 +7,9 @@ import { useCallback, useEffect, useMemo, type JSX } from 'react';
 import type { DocumentRow } from '@/db/schema';
 import { useDocuments } from '@/hooks/use-documents';
 import { useUiStore } from '@/store/ui';
+import { FileText } from 'lucide-react';
 import { ImportControl } from '@/components/parent/ImportControl';
 import { Welcome } from './Welcome';
-import { PageIcon } from '@/components/shared/icons';
 
 export function Shelf(): JSX.Element {
   const { documents, loading, refresh } = useDocuments();
@@ -70,7 +70,7 @@ function DocumentCard({ document, onOpen }: DocumentCardProps): JSX.Element {
         <img className="cover__image" src={coverUrl} alt="" />
       ) : (
         <span className="cover__placeholder">
-          <PageIcon size={48} />
+          <FileText size={48} aria-hidden />
         </span>
       )}
       <span className="cover__name">{document.name}</span>

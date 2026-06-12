@@ -1,35 +1,30 @@
 /**
- * The child tray: tools, crayon colors, sizes, undo. Icon-only, no text
- * anywhere, every target at least 56px (CLAUDE.md child zone rules).
+ * The child tray: tools, crayon colors, sizes, and the big green Done button.
+ * Icon-only (Lucide glyphs), no text, every target at least 56px (CLAUDE.md
+ * child zone rules).
  *
  * Data flow: the activity UI store holds the displayed selection; a single
  * effect mirrors it into the InkEngine, which is authoritative for stroke
- * capture. This is the one sync point, so what the tray shows as selected is
- * always what the engine draws with (fixes the "shows red, draws black" bug
- * where the engine kept its default until a swatch was tapped). Nothing here
- * is in the pointer-to-paint path.
+ * capture. Nothing here is in the pointer-to-paint path. Undo/redo live in the
+ * top bar (HistoryControls), not the tray.
  */
 import { useEffect, type CSSProperties, type JSX } from 'react';
+import { Brush, Eraser, Highlighter, Pencil, type LucideIcon } from 'lucide-react';
 import type { InkEngine } from '@/engine';
 import type { ToolId } from '@/types/ink';
 import { BRUSH_SIZES, INK_PALETTE } from '@/constants';
 import { brushSizeFor, useActivityUiStore } from '@/store/activity';
-import {
-  CrayonIcon,
-  EraserIcon,
-  MarkerIcon,
-  PencilIcon,
-  UndoIcon,
-} from '@/components/shared/icons';
+import { DoneButton } from './DoneButton';
 
-const TOOL_ICONS: Record<ToolId, (props: { size?: number }) => JSX.Element> = {
-  crayon: CrayonIcon,
-  marker: MarkerIcon,
-  pencil: PencilIcon,
-  eraser: EraserIcon,
+const TOOL_ICONS: Record<ToolId, LucideIcon> = {
+  crayon: Brush,
+  marker: Highlighter,
+  pencil: Pencil,
+  eraser: Eraser,
 };
 
 const TOOL_ORDER: ToolId[] = ['crayon', 'marker', 'pencil', 'eraser'];
+const TOOL_GLYPH_SIZE = 28;
 
 export type ToolbarProps = {
   engine: InkEngine;
@@ -87,7 +82,7 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
               aria-pressed={tool === id}
               onClick={() => setTool(id)}
             >
-              <Icon size={30} />
+              <Icon size={TOOL_GLYPH_SIZE} aria-hidden />
             </button>
           );
         })}
@@ -112,16 +107,7 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
 
       <span className="tray__divider" aria-hidden />
 
-      <div className="tray__group">
-        <button
-          type="button"
-          className="tool-button"
-          aria-label="undo"
-          onClick={() => engine.undo()}
-        >
-          <UndoIcon size={30} />
-        </button>
-      </div>
+      <DoneButton engine={engine} />
     </div>
   );
 }

@@ -32,6 +32,7 @@ export type PointerSample = { x: number; y: number; pressure: number };
 export type InkEvent =
   | { type: 'commit'; pageNumber: number; mark: PageMark }
   | { type: 'undo'; pageNumber: number }
+  | { type: 'redo'; pageNumber: number; mark: PageMark }
   | { type: 'clear'; pageNumber: number }
   | { type: 'load'; pageNumber: number };
 
@@ -113,6 +114,12 @@ function sanitizeMark(value: unknown): PageMark | null {
  */
 export class InkEngine {
   private readonly pages = new Map<number, PageMark[]>();
+  /**
+   * Per-page redo stack: marks removed by undo, in undo order, available to
+   * redo until a new mark is committed. Session-only; not persisted (a reload
+   * reflects the committed state, with no redo history).
+   */
+  private readonly redoStacks = new Map<number, PageMark[]>();
   private readonly listeners = new Set<InkEventListener>();
 
   private activePage = FIRST_PAGE;
@@ -192,6 +199,7 @@ export class InkEngine {
     this.current = null;
     if (!stroke || stroke.points.length === 0) return null;
     this.marksFor(this.activePage).push(stroke);
+    this.redoStacks.set(this.activePage, []); // a new mark invalidates redo
     this.emit({ type: 'commit', pageNumber: this.activePage, mark: stroke });
     return stroke;
   }
@@ -215,24 +223,46 @@ export class InkEngine {
   placeSticker(sticker: Sticker): Sticker {
     const mark = cloneMark(sticker) as Sticker;
     this.marksFor(this.activePage).push(mark);
+    this.redoStacks.set(this.activePage, []); // a new mark invalidates redo
     this.emit({ type: 'commit', pageNumber: this.activePage, mark });
     return mark;
   }
 
   // --- history -------------------------------------------------------------
 
-  /** Pop the most recent mark (stroke or sticker) from the active page. */
+  /** Pop the most recent mark (stroke or sticker) onto the redo stack. */
   undo(): boolean {
     const marks = this.pages.get(this.activePage);
     if (!marks || marks.length === 0) return false;
-    marks.pop();
+    const mark = marks.pop();
+    if (mark) this.redoStackFor(this.activePage).push(mark);
     this.emit({ type: 'undo', pageNumber: this.activePage });
     return true;
   }
 
-  /** Remove every mark from a page. */
+  /** Re-apply the most recently undone mark. Returns false if nothing to redo. */
+  redo(): boolean {
+    const stack = this.redoStacks.get(this.activePage);
+    if (!stack || stack.length === 0) return false;
+    const mark = stack.pop();
+    if (!mark) return false;
+    this.marksFor(this.activePage).push(mark);
+    this.emit({ type: 'redo', pageNumber: this.activePage, mark });
+    return true;
+  }
+
+  canUndo(pageNumber: number = this.activePage): boolean {
+    return (this.pages.get(pageNumber)?.length ?? 0) > 0;
+  }
+
+  canRedo(pageNumber: number = this.activePage): boolean {
+    return (this.redoStacks.get(pageNumber)?.length ?? 0) > 0;
+  }
+
+  /** Remove every mark from a page and drop its redo history. */
   clearPage(pageNumber: number = this.activePage): void {
     this.pages.set(pageNumber, []);
+    this.redoStacks.set(pageNumber, []);
     this.emit({ type: 'clear', pageNumber });
   }
 
@@ -285,6 +315,7 @@ export class InkEngine {
       }
     }
     this.pages.set(pageNumber, marks);
+    this.redoStacks.set(pageNumber, []);
     this.emit({ type: 'load', pageNumber });
   }
 
@@ -306,6 +337,15 @@ export class InkEngine {
       this.pages.set(pageNumber, marks);
     }
     return marks;
+  }
+
+  private redoStackFor(pageNumber: number): PageMark[] {
+    let stack = this.redoStacks.get(pageNumber);
+    if (!stack) {
+      stack = [];
+      this.redoStacks.set(pageNumber, stack);
+    }
+    return stack;
   }
 
   private toStrokePoint(sample: PointerSample, view: Viewport): StrokePoint {

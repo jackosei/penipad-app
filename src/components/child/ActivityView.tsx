@@ -9,11 +9,11 @@ import { useDrawingSurface } from '@/hooks/use-drawing-surface';
 import { useUiStore } from '@/store/ui';
 import type { InkEngine } from '@/engine';
 import type { PdfDocumentHandle } from '@/pdf/loader';
+import { House } from 'lucide-react';
 import { Toolbar } from './Toolbar';
 import { PageNav } from './PageNav';
-import { DoneButton } from './DoneButton';
+import { HistoryControls } from './HistoryControls';
 import { StickerLayer } from './StickerLayer';
-import { HomeIcon } from '@/components/shared/icons';
 
 export type ActivityViewProps = {
   documentId: string;
@@ -41,7 +41,7 @@ export function ActivityView({ documentId }: ActivityViewProps): JSX.Element {
             : session.message}
         </p>
         <button type="button" className="pending-home" aria-label="home" onClick={openShelf}>
-          <HomeIcon />
+          <House aria-hidden />
         </button>
       </main>
     );
@@ -84,9 +84,9 @@ function DrawingScreen({
   return (
     <main className="activity">
       <button type="button" className="activity__home" aria-label="home" onClick={onBack}>
-        <HomeIcon />
+        <House aria-hidden />
       </button>
-      <DoneButton engine={engine} />
+      <HistoryControls engine={engine} page={currentPage} />
 
       <div className="activity__page-area" ref={containerRef}>
         <div className="activity__stage" style={stackStyle}>

@@ -96,6 +96,23 @@ describe('startAutosave', () => {
     await autosave.dispose();
   });
 
+  it('persists a redo by re-appending the restored mark', async () => {
+    const activityId = await freshActivity();
+    const engine = new InkEngine();
+    const autosave = startAutosave({ engine, activityId, visibilityTarget: fakeVisibility() });
+
+    drawStroke(engine, 100);
+    engine.undo();
+    engine.redo();
+    await autosave.flush();
+
+    const batches = await loadPageStrokeBatches(activityId, 1);
+    expect(batches).toHaveLength(1);
+    expect(firstPointX(batches[0])).toBeCloseTo(0.1);
+
+    await autosave.dispose();
+  });
+
   it('mirrors a page clear', async () => {
     const activityId = await freshActivity();
     const engine = new InkEngine();

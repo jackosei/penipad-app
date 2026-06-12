@@ -61,6 +61,10 @@ export function startAutosave(options: AutosaveOptions): AutosaveHandle {
   const onInkEvent = (event: InkEvent): void => {
     switch (event.type) {
       case 'commit':
+      case 'redo':
+        // Redo re-appends the restored mark as a new batch, just like a fresh
+        // commit. (The in-session redo stack is what made it available; the
+        // persisted form is identical to a commit.)
         enqueue(() => appendStrokeBatch(activityId, event.pageNumber, [event.mark]));
         break;
       case 'undo':

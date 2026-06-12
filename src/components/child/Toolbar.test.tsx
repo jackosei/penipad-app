@@ -65,16 +65,10 @@ describe('Toolbar', () => {
     expect(engine.getSize()).toBe(BRUSH_SIZES[2]);
   });
 
-  it('undo pops the latest stroke from the engine', () => {
-    const view = { originX: 0, originY: 0, width: 1000, height: 1000 };
-    engine.beginStroke({ x: 10, y: 10, pressure: 0.5 }, view);
-    engine.endStroke();
-    expect(engine.getMarkCount()).toBe(1);
-
+  it('includes the green Done button (undo/redo live in the top bar)', () => {
     render(<Toolbar engine={engine} />);
-    fireEvent.click(screen.getByRole('button', { name: 'undo' }));
-
-    expect(engine.getMarkCount()).toBe(0);
+    expect(screen.getByRole('button', { name: 'done' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'undo' })).toBeNull();
   });
 
   it('contains no visible text, only icons (child zone rule)', () => {
