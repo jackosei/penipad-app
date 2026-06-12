@@ -22,11 +22,29 @@ export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
   unknown: 'This PDF could not be imported. Try a different file.',
 };
 
+/**
+ * One compact technical line for unclassified failures, so a field report
+ * from a device we cannot attach a debugger to (a tablet in the family beta)
+ * tells us what actually broke instead of just "unknown".
+ */
+function causeDetail(cause: unknown): string {
+  // Unwrap nested Error.cause chains to the root (bounded against cycles).
+  let depth = 0;
+  while (cause instanceof Error && cause.cause !== undefined && depth < 8) {
+    cause = cause.cause;
+    depth += 1;
+  }
+  if (cause instanceof Error) return `${cause.name}: ${cause.message}`;
+  return typeof cause === 'string' ? cause : '';
+}
+
 export class ImportError extends Error {
   readonly reason: keyof typeof IMPORT_ERROR_MESSAGES;
 
   constructor(reason: keyof typeof IMPORT_ERROR_MESSAGES, cause?: unknown) {
-    super(IMPORT_ERROR_MESSAGES[reason] ?? IMPORT_ERROR_MESSAGES.unknown, { cause });
+    const base = IMPORT_ERROR_MESSAGES[reason] ?? IMPORT_ERROR_MESSAGES.unknown;
+    const detail = reason === 'unknown' ? causeDetail(cause) : '';
+    super(detail ? `${base} (${detail})` : base, { cause });
     this.name = 'ImportError';
     this.reason = reason;
   }

@@ -8,6 +8,7 @@
  * schema.ts).
  */
 import Dexie from 'dexie';
+import { newId } from '@/utils/new-id';
 import { db } from './schema';
 import type { ActivityRow, DocumentRow, PageRow, StoredImage } from './schema';
 import type { PageMark, StrokeBatch } from '@/types/ink';
@@ -26,7 +27,7 @@ export type NewDocumentInput = {
 export function addDocument(input: NewDocumentInput): Promise<DocumentRow> {
   return db.transaction('rw', [db.documents, db.document_files], async () => {
     const row: DocumentRow = {
-      id: crypto.randomUUID(),
+      id: newId(),
       name: input.name,
       page_count: input.pageCount,
       thumbnail: input.thumbnail,
@@ -89,7 +90,7 @@ export function getOrCreateActivity(documentId: string): Promise<ActivityRow> {
     if (existing) return existing;
     const now = Date.now();
     const row: ActivityRow = {
-      id: crypto.randomUUID(),
+      id: newId(),
       document_id: documentId,
       last_page: 1,
       created_at: now,
@@ -140,7 +141,7 @@ export function appendStrokeBatch(
       .between(lower, upper)
       .last();
     const now = Date.now();
-    const id = crypto.randomUUID();
+    const id = newId();
     await db.stroke_batches.add({
       id,
       activity_id: activityId,
@@ -214,7 +215,7 @@ async function upsertPage(activityId: string, pageNumber: number, now: number): 
     await db.pages.update(existing.id, { updated_at: now });
   } else {
     const row: PageRow = {
-      id: crypto.randomUUID(),
+      id: newId(),
       activity_id: activityId,
       page_number: pageNumber,
       updated_at: now,

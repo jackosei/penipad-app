@@ -7,14 +7,19 @@
  * bundled and served from our own origin. Nothing is fetched from a CDN at
  * runtime; the app works with the network cable cut.
  */
-import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
+// The LEGACY build, deliberately: the modern build assumes a browser from the
+// last year or two (e.g. Promise.withResolvers needs Chrome 119+ / Safari
+// 17.4+) and dies with a generic error on older tablets. Our primary market is
+// exactly those tablets (Ama's Android, PRD personas), so the wider-support
+// build wins over the smaller one.
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type {
   PDFDocumentLoadingTask,
   PDFDocumentProxy,
   PDFPageProxy,
   RenderTask,
 } from 'pdfjs-dist';
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import pdfWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 import { PDF } from '@/constants';
 
 /** Same-origin base for pdf.js's lazily fetched assets (see vite.config.ts). */
