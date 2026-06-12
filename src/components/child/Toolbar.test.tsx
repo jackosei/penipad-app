@@ -74,12 +74,20 @@ describe('Toolbar', () => {
     expect(engine.getSize()).toBe(BRUSH_SIZES[2]);
   });
 
-  it('closes the color popover after a crayon is picked', () => {
-    render(<Toolbar engine={engine} />);
+  it('keeps the popover open on pick and closes it on an outside tap', () => {
+    const { container } = render(<Toolbar engine={engine} />);
     openColors();
     expect(screen.getAllByRole('button', { name: /^color / })).toHaveLength(8);
 
+    // Picking a crayon keeps the popover up (the lift animation stays visible).
     fireEvent.click(screen.getByRole('button', { name: `color ${INK_PALETTE[2]}` }));
+    expect(screen.getAllByRole('button', { name: /^color / })).toHaveLength(8);
+    expect(engine.getColor()).toBe(INK_PALETTE[2]);
+
+    // Tapping outside (the backdrop) dismisses it.
+    const backdrop = container.querySelector('.popover-backdrop');
+    expect(backdrop).not.toBeNull();
+    if (backdrop) fireEvent.click(backdrop);
     expect(screen.queryAllByRole('button', { name: /^color / })).toHaveLength(0);
   });
 

@@ -8,7 +8,7 @@
  * capture. Nothing here is in the pointer-to-paint path. Undo/redo live in the
  * top bar (HistoryControls), not the tray.
  */
-import { useEffect, type JSX } from 'react';
+import { useEffect, type CSSProperties, type JSX } from 'react';
 import { Brush, Eraser, Highlighter, Pencil, type LucideIcon } from 'lucide-react';
 import type { InkEngine } from '@/engine';
 import type { ToolId } from '@/types/ink';
@@ -49,7 +49,9 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
   };
 
   return (
-    <div className="tray" data-testid="toolbar">
+    // The current ink color rides on the tray as a CSS variable: the active
+    // tool ring, active size ring, and palette-trigger dots all wear it.
+    <div className="tray" data-testid="toolbar" style={{ '--current': color } as CSSProperties}>
       <div className="tray__group" role="group" aria-label="Tools">
         {TOOL_ORDER.map((id) => {
           const Icon = TOOL_ICONS[id];

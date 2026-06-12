@@ -638,17 +638,29 @@ button {
   height: 58px;
   border-radius: 18px;
   background: var(--surface);
-  color: var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  /* The current color rides as a thick inner ring. */
-  box-shadow: inset 0 0 0 5px var(--current, #000);
   transition: transform 0.08s ease;
 }
 
 .color-trigger:active {
   transform: scale(0.92);
+}
+
+/* Dark palette body so it always reads as "colors"... */
+.color-trigger__icon {
+  color: var(--ink);
+}
+
+/* ...with the paint wells enlarged and filled with the current color, so the
+   active color is obvious at a glance (CSS overrides Lucide's tiny dots). */
+.color-trigger__icon circle {
+  r: 1.9px;
+  fill: var(--current, #000);
+  stroke: var(--ink);
+  stroke-width: 0.75px;
+  paint-order: stroke;
 }
 
 .popover-backdrop {
@@ -661,12 +673,13 @@ button {
   position: absolute;
   bottom: calc(100% + 14px);
   left: 50%;
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: 2px 6px;
-  padding: 12px;
+  /* One horizontal flow of crayons with even spacing. */
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 14px 18px;
   background: var(--paper);
-  border-radius: 20px;
+  border-radius: 22px;
   box-shadow: 0 10px 30px rgba(51, 65, 92, 0.28);
   z-index: 20;
   transform: translateX(-50%);
@@ -718,9 +731,17 @@ button {
   transform: scale(0.92);
 }
 
+/* The active ring wears the current ink color, so the selected tool always
+   shows what it will draw with. Falls back to the accent before first pick. */
 .tool-button--active {
   background: var(--surface-active);
-  box-shadow: inset 0 0 0 3px var(--accent);
+  box-shadow: inset 0 0 0 4px var(--current, var(--accent));
+}
+
+/* The eraser does not ink, so its active ring stays neutral instead of
+   wearing the drawing color. */
+.tool-button--active[aria-label='eraser'] {
+  box-shadow: inset 0 0 0 4px var(--ink-soft);
 }
 
 /* size buttons */
@@ -743,7 +764,12 @@ button {
 
 .size-button--active {
   background: var(--surface-active);
-  box-shadow: inset 0 0 0 3px var(--accent);
+  box-shadow: inset 0 0 0 4px var(--current, var(--accent));
+}
+
+/* The active size dot previews the actual ink color too. */
+.size-button--active .size-button__dot {
+  background: var(--current, var(--ink));
 }
 
 .size-button__dot {

@@ -17,11 +17,6 @@ export type ColorPickerProps = {
 export function ColorPicker({ color, onPick }: ColorPickerProps): JSX.Element {
   const [open, setOpen] = useState(false);
 
-  const choose = (next: string): void => {
-    onPick(next);
-    setOpen(false);
-  };
-
   return (
     <div className="color-picker">
       <button
@@ -33,7 +28,7 @@ export function ColorPicker({ color, onPick }: ColorPickerProps): JSX.Element {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <Palette className="color-trigger__icon" size={28} aria-hidden />
+        <Palette className="color-trigger__icon" size={30} aria-hidden />
       </button>
 
       {open && (
@@ -48,7 +43,9 @@ export function ColorPicker({ color, onPick }: ColorPickerProps): JSX.Element {
                 style={{ '--crayon': swatch } as CSSProperties}
                 aria-label={`color ${swatch}`}
                 aria-pressed={color === swatch}
-                onClick={() => choose(swatch)}
+                // Picking keeps the popover open so the crayon's lift animation
+                // reads; it closes when the child taps outside (the backdrop).
+                onClick={() => onPick(swatch)}
               >
                 <span className="crayon__stick" aria-hidden>
                   <span className="crayon__tip" />
