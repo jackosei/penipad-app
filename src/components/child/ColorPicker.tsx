@@ -1,12 +1,12 @@
 /**
- * Color picker: a palette button in the tray that opens a popover of crayons
- * above the toolbar. Collapsing the 8 colors into one trigger keeps the tray a
- * single row (fixes the tablet wrapping). The trigger wears the current color
- * as a ring so the child always sees their active color; the popover is
- * dismissed by tapping a crayon or the backdrop. Icon-only, 56px+ targets.
+ * Color picker: the tray trigger IS a little crayon wearing the current ink
+ * color, so a pre-reader reads it literally ("that is my crayon; tapping it
+ * opens the crayon box"). The popover is one horizontal row of crayons,
+ * centered on the screen above the tray, dismissed by tapping outside;
+ * picking a crayon keeps it open so the lift animation reads. Icon-only,
+ * 56px+ targets.
  */
 import { useState, type CSSProperties, type JSX } from 'react';
-import { Palette } from 'lucide-react';
 import { INK_PALETTE } from '@/constants';
 
 export type ColorPickerProps = {
@@ -14,21 +14,30 @@ export type ColorPickerProps = {
   onPick: (color: string) => void;
 };
 
+function CrayonStick(): JSX.Element {
+  return (
+    <span className="crayon__stick" aria-hidden>
+      <span className="crayon__tip" />
+      <span className="crayon__body" />
+    </span>
+  );
+}
+
 export function ColorPicker({ color, onPick }: ColorPickerProps): JSX.Element {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="color-picker">
+    <>
       <button
         type="button"
         className="color-trigger"
-        style={{ '--current': color } as CSSProperties}
+        style={{ '--crayon': color } as CSSProperties}
         aria-label="colors"
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        <Palette className="color-trigger__icon" size={30} aria-hidden />
+        <CrayonStick />
       </button>
 
       {open && (
@@ -43,19 +52,14 @@ export function ColorPicker({ color, onPick }: ColorPickerProps): JSX.Element {
                 style={{ '--crayon': swatch } as CSSProperties}
                 aria-label={`color ${swatch}`}
                 aria-pressed={color === swatch}
-                // Picking keeps the popover open so the crayon's lift animation
-                // reads; it closes when the child taps outside (the backdrop).
                 onClick={() => onPick(swatch)}
               >
-                <span className="crayon__stick" aria-hidden>
-                  <span className="crayon__tip" />
-                  <span className="crayon__body" />
-                </span>
+                <CrayonStick />
               </button>
             ))}
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }

@@ -1,17 +1,18 @@
 /**
- * Child-zone confirmation: icon-only, no text (pre-reader rule). A card shows
- * a large picture of what is about to happen and two big buttons: a green
- * check (yes) and a red X (no). Tapping the backdrop also cancels, and the
- * destructive/affirming action is never the easiest tap (X comes first).
+ * Child-zone confirmation, icon-only and pre-reader safe.
  *
- * Used to confirm wiping a page clean (F1.4 "clear page with confirm") and
- * finishing a page (Done), both of which a stray tap should not trigger.
+ * Field-tested design: symmetrical yes/no buttons confuse young children, who
+ * read symbols as actions (a red X next to a sponge reads as "X erases my
+ * work"). So the choice is asymmetric, the pattern used across well-tested
+ * kids' apps: one BIG green button that pictures the action itself ("tap the
+ * picture to make it happen"), and a small, muted X in the card corner that
+ * reads as "close this popup", not as an action.
  */
 import type { JSX, ReactNode } from 'react';
-import { Check, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export type KidConfirmProps = {
-  /** Large pictogram of the action being confirmed (e.g. the wipe brush). */
+  /** Pictogram of the action, rendered inside the big confirm button. */
   subject: ReactNode;
   /** Accessible name for the dialog (not rendered as visible text). */
   label: string;
@@ -24,17 +25,12 @@ export function KidConfirm({ subject, label, onConfirm, onCancel }: KidConfirmPr
     <div className="kid-confirm" role="dialog" aria-modal="true" aria-label={label}>
       <div className="kid-confirm__backdrop" aria-hidden onClick={onCancel} />
       <div className="kid-confirm__card">
-        <div className="kid-confirm__subject" aria-hidden>
+        <button type="button" className="kid-confirm__dismiss" aria-label="no" onClick={onCancel}>
+          <X size={24} aria-hidden />
+        </button>
+        <button type="button" className="kid-confirm__action" aria-label="yes" onClick={onConfirm}>
           {subject}
-        </div>
-        <div className="kid-confirm__choices">
-          <button type="button" className="kid-confirm__no" aria-label="no" onClick={onCancel}>
-            <X size={34} aria-hidden />
-          </button>
-          <button type="button" className="kid-confirm__yes" aria-label="yes" onClick={onConfirm}>
-            <Check size={34} aria-hidden />
-          </button>
-        </div>
+        </button>
       </div>
     </div>
   );

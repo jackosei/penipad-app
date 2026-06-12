@@ -1,12 +1,12 @@
 /**
- * The child tray: tools, a color picker (palette button + popover), sizes, and
- * the big green Done button. A single row, icon-only (Lucide glyphs), no text,
+ * The child tray: tools, the crayon color trigger, and sizes. One short row
+ * that fits even narrow tablets; everything page-level (undo/redo, wipe,
+ * done, navigation) lives in the top bar. Icon-only (Lucide glyphs), no text,
  * every target at least 56px (CLAUDE.md child zone rules).
  *
  * Data flow: the activity UI store holds the displayed selection; a single
  * effect mirrors it into the InkEngine, which is authoritative for stroke
- * capture. Nothing here is in the pointer-to-paint path. Undo/redo live in the
- * top bar (HistoryControls), not the tray.
+ * capture. Nothing here is in the pointer-to-paint path.
  */
 import { useEffect, type CSSProperties, type JSX } from 'react';
 import { Brush, Eraser, Highlighter, Pencil, type LucideIcon } from 'lucide-react';
@@ -15,8 +15,6 @@ import type { ToolId } from '@/types/ink';
 import { BRUSH_SIZES } from '@/constants';
 import { brushSizeFor, useActivityUiStore } from '@/store/activity';
 import { ColorPicker } from './ColorPicker';
-import { DoneButton } from './DoneButton';
-import { WipeButton } from './WipeButton';
 
 const TOOL_ICONS: Record<ToolId, LucideIcon> = {
   crayon: Brush,
@@ -90,13 +88,6 @@ export function Toolbar({ engine }: ToolbarProps): JSX.Element {
             <span className="size-button__dot" data-size={index} aria-hidden />
           </button>
         ))}
-      </div>
-
-      <span className="tray__divider" aria-hidden />
-
-      <div className="tray__group">
-        <WipeButton engine={engine} />
-        <DoneButton engine={engine} />
       </div>
     </div>
   );

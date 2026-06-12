@@ -1,8 +1,7 @@
 /**
- * The "Done" affordance (F1.12): a green square in the tray, sized like the
- * other tools so the row never wraps. Tapping it asks first (icon-only
- * KidConfirm with a star), then celebrates: one sticker drops on the page and
- * confetti fires.
+ * The "Done" affordance (F1.12): the green check in the top bar. Tapping it
+ * asks first (icon-only KidConfirm with a star), then celebrates: one sticker
+ * drops on the page and confetti fires.
  *
  * Bounded by design: at most one sticker per page (idempotent). Confirmed
  * repeat taps re-fire confetti for the joy of it but never spawn a second
@@ -45,11 +44,11 @@ export function DoneButton({ engine }: DoneButtonProps): JSX.Element {
     <>
       <button
         type="button"
-        className="done-button"
+        className="top-button top-button--done"
         aria-label="done"
         onClick={() => setConfirming(true)}
       >
-        <Check size={30} aria-hidden />
+        <Check size={26} aria-hidden />
       </button>
 
       {confirming && (

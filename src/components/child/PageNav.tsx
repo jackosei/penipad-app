@@ -1,7 +1,7 @@
 /**
- * Page navigation arrows. Icon-only, 56px+ targets, disabled at the ends.
- * Page position is conveyed by dots (visual, not text) so a pre-reader can
- * see where they are in the book.
+ * Page navigation: a compact top-bar cluster (prev, dots, next) so the
+ * worksheet itself stays untouched chrome-free. Icon-only, 56px+ targets,
+ * arrows disabled at the ends; the dots show where you are without text.
  */
 import type { JSX } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -18,35 +18,35 @@ export function PageNav({ currentPage, pageCount, onNavigate }: PageNavProps): J
   if (pageCount <= 1) return null;
 
   return (
-    <>
+    <div className="page-nav">
       <button
         type="button"
-        className="page-nav page-nav--prev"
+        className="top-button"
         aria-label="previous page"
         disabled={currentPage <= 1}
         onClick={() => onNavigate(currentPage - 1)}
       >
         <ChevronLeft aria-hidden />
       </button>
+      {pageCount <= MAX_DOTS && (
+        <div className="page-nav__dots" aria-hidden>
+          {Array.from({ length: pageCount }, (_, i) => (
+            <span
+              key={i}
+              className={`page-nav__dot${i + 1 === currentPage ? ' page-nav__dot--active' : ''}`}
+            />
+          ))}
+        </div>
+      )}
       <button
         type="button"
-        className="page-nav page-nav--next"
+        className="top-button"
         aria-label="next page"
         disabled={currentPage >= pageCount}
         onClick={() => onNavigate(currentPage + 1)}
       >
         <ChevronRight aria-hidden />
       </button>
-      {pageCount <= MAX_DOTS && (
-        <div className="page-dots" aria-hidden>
-          {Array.from({ length: pageCount }, (_, i) => (
-            <span
-              key={i}
-              className={`page-dots__dot${i + 1 === currentPage ? ' page-dots__dot--active' : ''}`}
-            />
-          ))}
-        </div>
-      )}
-    </>
+    </div>
   );
 }

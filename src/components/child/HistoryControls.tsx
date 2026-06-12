@@ -17,10 +17,10 @@ export function HistoryControls({ engine, page }: HistoryControlsProps): JSX.Ele
   const { canUndo, canRedo } = useHistoryState(engine, page);
 
   return (
-    <div className="history-controls">
+    <>
       <button
         type="button"
-        className="history-button"
+        className="top-button"
         aria-label="undo"
         disabled={!canUndo}
         onClick={() => engine.undo()}
@@ -29,13 +29,13 @@ export function HistoryControls({ engine, page }: HistoryControlsProps): JSX.Ele
       </button>
       <button
         type="button"
-        className="history-button"
+        className="top-button"
         aria-label="redo"
         disabled={!canRedo}
         onClick={() => engine.redo()}
       >
         <Redo2 size={26} aria-hidden />
       </button>
-    </div>
+    </>
   );
 }

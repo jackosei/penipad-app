@@ -1,7 +1,8 @@
 /**
- * The drawing screen: PDF page with the layered ink canvas stack, the child
- * tray below, page arrows at the sides, and an icon-only back button. The
- * worksheet is the hero; chrome stays at the edges.
+ * The drawing screen. Three bands: a top bar (home, page nav, history, wipe,
+ * done), the worksheet with its layered ink canvas stack, and the child tray
+ * (tools, colors, sizes). The worksheet itself carries zero chrome; the page
+ * is the hero.
  */
 import type { JSX } from 'react';
 import { useActivitySession } from '@/hooks/use-activity-session';
@@ -13,6 +14,8 @@ import { House } from 'lucide-react';
 import { Toolbar } from './Toolbar';
 import { PageNav } from './PageNav';
 import { HistoryControls } from './HistoryControls';
+import { WipeButton } from './WipeButton';
+import { DoneButton } from './DoneButton';
 import { StickerLayer } from './StickerLayer';
 
 export type ActivityViewProps = {
@@ -83,10 +86,21 @@ function DrawingScreen({
 
   return (
     <main className="activity">
-      <button type="button" className="activity__home" aria-label="home" onClick={onBack}>
-        <House aria-hidden />
-      </button>
-      <HistoryControls engine={engine} page={currentPage} />
+      <div className="topbar">
+        <button type="button" className="top-button" aria-label="home" onClick={onBack}>
+          <House size={26} aria-hidden />
+        </button>
+
+        <span className="topbar__spacer" />
+        <PageNav currentPage={currentPage} pageCount={pageCount} onNavigate={onNavigate} />
+        <span className="topbar__spacer" />
+
+        <div className="topbar__cluster">
+          <HistoryControls engine={engine} page={currentPage} />
+          <WipeButton engine={engine} />
+          <DoneButton engine={engine} />
+        </div>
+      </div>
 
       <div className="activity__page-area" ref={containerRef}>
         <div className="activity__stage" style={stackStyle}>
@@ -99,7 +113,6 @@ function DrawingScreen({
             />
             <StickerLayer engine={engine} page={currentPage} />
           </div>
-          <PageNav currentPage={currentPage} pageCount={pageCount} onNavigate={onNavigate} />
         </div>
       </div>
 

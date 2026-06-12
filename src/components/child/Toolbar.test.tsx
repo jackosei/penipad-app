@@ -91,9 +91,10 @@ describe('Toolbar', () => {
     expect(screen.queryAllByRole('button', { name: /^color / })).toHaveLength(0);
   });
 
-  it('includes the green Done button (undo/redo live in the top bar)', () => {
+  it('holds only drawing controls (page-level actions live in the top bar)', () => {
     render(<Toolbar engine={engine} />);
-    expect(screen.getByRole('button', { name: 'done' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'done' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'wipe page' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'undo' })).toBeNull();
   });
 

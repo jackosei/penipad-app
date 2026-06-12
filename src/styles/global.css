@@ -353,10 +353,26 @@ button {
   box-shadow: none;
 }
 
-.activity__home {
-  position: fixed;
-  top: 14px;
-  left: 14px;
+/* ---------- top bar (everything page-level) ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+}
+
+.topbar__spacer {
+  flex: 1;
+}
+
+.topbar__cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-button {
   width: 56px;
   height: 56px;
   border-radius: 18px;
@@ -367,12 +383,21 @@ button {
   justify-content: center;
   box-shadow: 0 3px 0 rgba(51, 65, 92, 0.12);
   transition: transform 0.08s ease;
-  z-index: 10;
 }
 
-.activity__home:active {
+.top-button:active {
   transform: translateY(3px);
   box-shadow: none;
+}
+
+.top-button:disabled {
+  opacity: 0.35;
+}
+
+.top-button--done {
+  background: #2ed573;
+  color: #fff;
+  box-shadow: 0 3px 0 #1fae5b;
 }
 
 .activity__page-area {
@@ -384,9 +409,7 @@ button {
   justify-content: center;
 }
 
-/* Page-sized wrapper: the canvas fills it; page nav pins to its edges so the
-   arrows sit against the PDF, not at the screen edge. Overflow stays visible
-   so the arrows can hang just outside the page. */
+/* Page-sized wrapper for the canvas stack; the page itself carries no chrome. */
 .activity__stage {
   position: relative;
 }
@@ -455,60 +478,7 @@ button {
   }
 }
 
-/* ---------- history controls (top bar undo/redo) ---------- */
-
-.history-controls {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  display: flex;
-  gap: 10px;
-  z-index: 10;
-}
-
-.history-button {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  background: var(--paper);
-  color: var(--ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 0 rgba(51, 65, 92, 0.12);
-  transition: transform 0.08s ease;
-}
-
-.history-button:active {
-  transform: translateY(3px);
-  box-shadow: none;
-}
-
-.history-button:disabled {
-  opacity: 0.4;
-}
-
-/* ---------- Done button (tray) + confetti ---------- */
-
-.done-button {
-  height: 58px;
-  width: 58px;
-  border-radius: 18px;
-  background: #2ed573;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 0 #1fae5b;
-  transition: transform 0.08s ease;
-}
-
-.done-button:active {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-
-/* ---------- kid confirm (icon-only yes/no) ---------- */
+/* ---------- kid confirm (icon-only) ---------- */
 
 .kid-confirm__backdrop {
   position: fixed;
@@ -546,40 +516,40 @@ button {
   }
 }
 
-.kid-confirm__subject {
-  color: var(--ink);
-}
-
-.kid-confirm__choices {
-  display: flex;
-  gap: 18px;
-}
-
-.kid-confirm__no,
-.kid-confirm__yes {
-  width: 72px;
-  height: 64px;
-  border-radius: 18px;
+/* Small, muted, in the corner: reads as "close this popup", never as an
+   action. Still a 56px child-zone target. */
+.kid-confirm__dismiss {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 6px rgba(51, 65, 92, 0.18);
+}
+
+/* The one big button: it pictures the action itself ("tap the picture to
+   make it happen"), so the consequence is the button. */
+.kid-confirm__action {
+  width: 132px;
+  height: 116px;
+  border-radius: 24px;
+  background: #2ed573;
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 0 #1fae5b;
   transition: transform 0.08s ease;
 }
 
-.kid-confirm__no {
-  background: #ff4757;
-  box-shadow: 0 4px 0 #d63a48;
-}
-
-.kid-confirm__yes {
-  background: #2ed573;
-  box-shadow: 0 4px 0 #1fae5b;
-}
-
-.kid-confirm__no:active,
-.kid-confirm__yes:active {
-  transform: translateY(4px);
+.kid-confirm__action:active {
+  transform: translateY(6px);
   box-shadow: none;
 }
 
@@ -613,53 +583,20 @@ button {
 
 /* ---------- page navigation ---------- */
 
+/* Page navigation lives in the top bar: arrows flanking the position dots,
+   completely off the worksheet. */
 .page-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  /* Slightly translucent so the worksheet shows through at the page edge. */
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--ink);
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 8px rgba(51, 65, 92, 0.2);
-  z-index: 5;
-  transition: transform 0.08s ease;
+  gap: 10px;
 }
 
-.page-nav:active {
-  transform: translateY(calc(-50% + 3px));
-  box-shadow: none;
-}
-
-.page-nav:disabled {
-  opacity: 0.3;
-}
-
-/* The arrows sit just inside the page edges (e-reader style): always visible
-   at any page/screen ratio and they can never overflow the viewport. */
-.page-nav--prev {
-  left: 10px;
-}
-
-.page-nav--next {
-  right: 10px;
-}
-
-.page-dots {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
+.page-nav__dots {
   display: flex;
   gap: 7px;
 }
 
-.page-dots__dot {
+.page-nav__dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -667,14 +604,14 @@ button {
   transition: background 0.15s ease;
 }
 
-.page-dots__dot--active {
+.page-nav__dot--active {
   background: var(--accent);
 }
 
 /* ---------- child tray ---------- */
 
-/* Single row: tools, color picker, sizes, Done. Colors live in a popover off
-   the palette button, so the row stays narrow and never wraps on tablets. */
+/* One short row: tools, the crayon color trigger, sizes. Page-level actions
+   live in the top bar, so the tray fits even narrow tablets without wrapping. */
 .tray {
   display: flex;
   align-items: center;
@@ -701,26 +638,19 @@ button {
   align-self: center;
 }
 
-/* ---------- color picker (trigger + popover) ---------- */
+/* ---------- color picker (crayon trigger + popover) ---------- */
 
-.color-picker {
-  position: relative;
-  display: inline-flex;
-}
-
+/* The trigger IS a little crayon in the current ink color: literal for a
+   pre-reader, and it doubles as the current-color indicator. */
 .color-trigger {
   width: 58px;
   height: 58px;
   border-radius: 18px;
-  background: var(--paper);
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Same press shadow as the tools, plus an outer ring in the current ink
-     color so the trigger is unmistakably "colors live here". */
-  box-shadow:
-    inset 0 -3px 0 rgba(51, 65, 92, 0.1),
-    0 0 0 3px var(--current, var(--accent));
+  box-shadow: inset 0 -3px 0 rgba(51, 65, 92, 0.1);
   transition: transform 0.08s ease;
 }
 
@@ -728,19 +658,11 @@ button {
   transform: scale(0.92);
 }
 
-/* Dark palette body so it always reads as "colors"... */
-.color-trigger__icon {
-  color: var(--ink);
-}
-
-/* ...with the paint wells enlarged and filled with the current color, so the
-   active color is obvious at a glance (CSS overrides Lucide's tiny dots). */
-.color-trigger__icon circle {
-  r: 1.9px;
-  fill: var(--current, #000);
-  stroke: var(--ink);
-  stroke-width: 0.75px;
-  paint-order: stroke;
+/* Scale the crayon stick down to fit the button; no pop-up offset here. */
+.color-trigger .crayon__stick {
+  width: 22px;
+  height: 44px;
+  transform: none;
 }
 
 .popover-backdrop {
@@ -749,15 +671,19 @@ button {
   z-index: 19;
 }
 
+/* Centered on the screen above the tray, independent of where the trigger
+   sits, so it always fits and always lands in the same place. */
 .color-popover {
-  position: absolute;
-  bottom: calc(100% + 14px);
+  position: fixed;
+  bottom: calc(110px + env(safe-area-inset-bottom));
   left: 50%;
   /* One horizontal flow of crayons with even spacing. */
   display: flex;
   align-items: flex-end;
   gap: 8px;
   padding: 14px 18px;
+  max-width: calc(100vw - 16px);
+  overflow-x: auto;
   background: var(--paper);
   border-radius: 22px;
   box-shadow: 0 10px 30px rgba(51, 65, 92, 0.28);
@@ -765,17 +691,6 @@ button {
   transform: translateX(-50%);
   transform-origin: bottom center;
   animation: popover-pop 0.16s var(--spring);
-}
-
-/* Caret pointing down to the trigger. */
-.color-popover::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 9px solid transparent;
-  border-top-color: var(--paper);
 }
 
 @keyframes popover-pop {
@@ -817,7 +732,7 @@ button {
 .tool-button--active {
   background: var(--surface-active);
   box-shadow: inset 0 0 0 4px var(--current, var(--accent));
-  transform: translateY(-6px) scale(1.08);
+  /* transform: translateY(-6px) scale(1.08); */
   transition: transform 0.18s var(--spring);
 }
 
