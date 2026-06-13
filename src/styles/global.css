@@ -146,21 +146,43 @@ button {
 }
 
 .cover {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
+  position: relative;
   border-radius: 20px;
   background: var(--paper);
   box-shadow:
     0 6px 0 rgba(51, 65, 92, 0.08),
     0 10px 24px rgba(51, 65, 92, 0.1);
+}
+
+.cover__open {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 20px;
   transition: transform 0.12s var(--spring);
 }
 
-.cover:active {
+.cover__open:active {
   transform: translateY(3px) scale(0.99);
+}
+
+/* Parent affordance: small, top-right, off the child's one-tap open target. */
+.cover__more {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(51, 65, 92, 0.18);
 }
 
 .cover__image,
@@ -395,6 +417,81 @@ button {
 .shelf__settings:active {
   transform: translateY(3px);
   box-shadow: none;
+}
+
+/* ---------- document actions (parent menu) ---------- */
+
+.doc-actions__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(51, 65, 92, 0.45);
+  z-index: 30;
+}
+
+.doc-actions__card {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, 100vw);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 40px rgba(51, 65, 92, 0.3);
+  z-index: 31;
+  animation: sheet-rise 0.2s var(--spring);
+}
+
+@keyframes sheet-rise {
+  0% {
+    transform: translate(-50%, 100%);
+  }
+
+  100% {
+    transform: translate(-50%, 0);
+  }
+}
+
+.doc-actions__name {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-actions__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.doc-actions__item:active {
+  transform: scale(0.98);
+}
+
+.doc-actions__item--danger {
+  background: #ffe9eb;
+  color: #d63a48;
+}
+
+.doc-actions__cancel {
+  min-height: 52px;
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 /* ---------- parent notice ---------- */

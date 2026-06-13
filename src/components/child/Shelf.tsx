@@ -3,12 +3,13 @@
  * worksheet is one tap on its cover. Importing and deleting are parent
  * actions and live behind the gate (see ImportControl).
  */
-import { useCallback, useEffect, useMemo, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import type { DocumentRow } from '@/db/schema';
 import { useDocuments } from '@/hooks/use-documents';
 import { useUiStore } from '@/store/ui';
-import { FileText, Settings as SettingsIcon } from 'lucide-react';
+import { EllipsisVertical, FileText, Settings as SettingsIcon } from 'lucide-react';
 import { ImportControl } from '@/components/parent/ImportControl';
+import { DocumentActions } from '@/components/parent/DocumentActions';
 import { Welcome } from './Welcome';
 
 function SettingsButton(): JSX.Element {
@@ -30,6 +31,7 @@ export function Shelf(): JSX.Element {
   const { documents, loading, refresh } = useDocuments();
   const openActivity = useUiStore((s) => s.openActivity);
   const onImported = useCallback(() => void refresh(), [refresh]);
+  const [actionsFor, setActionsFor] = useState<DocumentRow | null>(null);
 
   if (loading) {
     return (
@@ -54,10 +56,25 @@ export function Shelf(): JSX.Element {
       <SettingsButton />
       <div className="shelf__grid">
         {documents.map((doc) => (
-          <DocumentCard key={doc.id} document={doc} onOpen={() => openActivity(doc.id)} />
+          <DocumentCard
+            key={doc.id}
+            document={doc}
+            onOpen={() => openActivity(doc.id)}
+            onMore={() => setActionsFor(doc)}
+          />
         ))}
       </div>
       <ImportControl variant="fab" onImported={onImported} />
+      {actionsFor && (
+        <DocumentActions
+          document={actionsFor}
+          onClose={() => setActionsFor(null)}
+          onDeleted={() => {
+            setActionsFor(null);
+            void refresh();
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -65,9 +82,10 @@ export function Shelf(): JSX.Element {
 type DocumentCardProps = {
   document: DocumentRow;
   onOpen: () => void;
+  onMore: () => void;
 };
 
-function DocumentCard({ document, onOpen }: DocumentCardProps): JSX.Element {
+function DocumentCard({ document, onOpen, onMore }: DocumentCardProps): JSX.Element {
   const coverUrl = useMemo(() => {
     if (!document.thumbnail) return null;
     const blob = new Blob([document.thumbnail.bytes], { type: document.thumbnail.type });
@@ -81,15 +99,25 @@ function DocumentCard({ document, onOpen }: DocumentCardProps): JSX.Element {
   }, [coverUrl]);
 
   return (
-    <button type="button" className="cover" onClick={onOpen} aria-label={document.name}>
-      {coverUrl ? (
-        <img className="cover__image" src={coverUrl} alt="" />
-      ) : (
-        <span className="cover__placeholder">
-          <FileText size={48} aria-hidden />
-        </span>
-      )}
-      <span className="cover__name">{document.name}</span>
-    </button>
+    <div className="cover">
+      <button type="button" className="cover__open" onClick={onOpen} aria-label={document.name}>
+        {coverUrl ? (
+          <img className="cover__image" src={coverUrl} alt="" />
+        ) : (
+          <span className="cover__placeholder">
+            <FileText size={48} aria-hidden />
+          </span>
+        )}
+        <span className="cover__name">{document.name}</span>
+      </button>
+      <button
+        type="button"
+        className="cover__more"
+        aria-label={`options for ${document.name}`}
+        onClick={onMore}
+      >
+        <EllipsisVertical size={20} aria-hidden />
+      </button>
+    </div>
   );
 }
