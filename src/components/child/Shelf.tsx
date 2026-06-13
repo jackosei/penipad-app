@@ -53,18 +53,23 @@ export function Shelf(): JSX.Element {
 
   return (
     <main className="shelf">
-      <SettingsButton />
-      <div className="shelf__grid">
-        {documents.map((doc) => (
-          <DocumentCard
-            key={doc.id}
-            document={doc}
-            onOpen={() => openActivity(doc.id)}
-            onMore={() => setActionsFor(doc)}
-          />
-        ))}
+      <header className="shelf__header">
+        <SettingsButton />
+        <h1 className="shelf__brand">Peni Pad</h1>
+        <ImportControl variant="fab" onImported={onImported} />
+      </header>
+      <div className="shelf__scroll">
+        <div className="shelf__grid">
+          {documents.map((doc) => (
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              onOpen={() => openActivity(doc.id)}
+              onMore={() => setActionsFor(doc)}
+            />
+          ))}
+        </div>
       </div>
-      <ImportControl variant="fab" onImported={onImported} />
       {actionsFor && (
         <DocumentActions
           document={actionsFor}

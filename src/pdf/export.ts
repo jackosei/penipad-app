@@ -103,13 +103,45 @@ async function withDocument<T>(
   }
 }
 
-/** Export a single flattened page as a PNG. */
-export function exportPagePng(documentId: string, pageNumber: number): Promise<ExportResult> {
+const PAGE_GAP = 16;
+
+/**
+ * Export the whole worksheet as a single PNG: one page becomes one image,
+ * multiple pages stack vertically into one tall image. A single image is one
+ * download from one tap, which the strict mobile browsers (iOS Safari) require;
+ * the PDF export is the per-page document form.
+ */
+export function exportPagesPng(documentId: string): Promise<ExportResult> {
   return withDocument(documentId, async (handle, activityId, name) => {
-    const canvas = await flattenPage(handle, activityId, pageNumber);
-    const blob = await canvasToPngBlob(canvas);
-    return { blob, filename: `${safeFilename(name)}-page-${pageNumber}.png` };
+    const pages: HTMLCanvasElement[] = [];
+    for (let pageNumber = 1; pageNumber <= handle.pageCount; pageNumber++) {
+      pages.push(await flattenPage(handle, activityId, pageNumber));
+    }
+
+    const blob = await canvasToPngBlob(pages.length === 1 ? pages[0]! : stackVertically(pages));
+    return { blob, filename: `${safeFilename(name)}.png` };
   });
+}
+
+/** Compose page canvases into one tall, white-backed canvas. */
+function stackVertically(pages: HTMLCanvasElement[]): HTMLCanvasElement {
+  const width = Math.max(...pages.map((c) => c.width));
+  const height = pages.reduce((sum, c) => sum + c.height, 0) + PAGE_GAP * (pages.length - 1);
+
+  const out = document.createElement('canvas');
+  out.width = width;
+  out.height = height;
+  const ctx = out.getContext('2d', { alpha: false });
+  if (!ctx) throw new Error('Could not acquire a 2D context for export');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  let y = 0;
+  for (const page of pages) {
+    ctx.drawImage(page, Math.floor((width - page.width) / 2), y);
+    y += page.height + PAGE_GAP;
+  }
+  return out;
 }
 
 /** Export the whole activity as a flattened, multi-page PDF. */

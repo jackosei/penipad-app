@@ -24,6 +24,7 @@ export function DocumentActions({
 }: DocumentActionsProps): JSX.Element {
   const requestGate = useUiStore((s) => s.requestGate);
   const setParentNotice = useUiStore((s) => s.setParentNotice);
+  const setBusy = useUiStore((s) => s.setBusy);
 
   /** Close the menu, then front the action with the gate. */
   const gated = (label: string, run: () => void): void => {
@@ -32,14 +33,19 @@ export function DocumentActions({
   };
 
   const save = async (kind: 'png' | 'pdf'): Promise<void> => {
+    // Blocking message: export rasterizes every page and can take a few
+    // seconds, and the overlay also stops a second tap kicking off a duplicate.
+    setBusy(kind === 'pdf' ? 'Saving the PDF, this can take a moment.' : 'Saving the picture.');
     try {
-      const { exportPagePng, exportActivityPdf } = await import('@/pdf/export');
+      const { exportPagesPng, exportActivityPdf } = await import('@/pdf/export');
       const { downloadBlob } = await import('@/utils/download');
       const result =
-        kind === 'png' ? await exportPagePng(document.id, 1) : await exportActivityPdf(document.id);
+        kind === 'png' ? await exportPagesPng(document.id) : await exportActivityPdf(document.id);
       downloadBlob(result.blob, result.filename);
     } catch {
       setParentNotice('Sorry, this worksheet could not be saved.');
+    } finally {
+      setBusy(null);
     }
   };
 

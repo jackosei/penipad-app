@@ -9,6 +9,7 @@ import { ActivityView } from '@/components/child/ActivityView';
 import { Settings } from '@/components/parent/Settings';
 import { ParentGate } from '@/components/parent/ParentGate';
 import { ParentNotice } from '@/components/parent/ParentNotice';
+import { BusyOverlay } from '@/components/parent/BusyOverlay';
 
 function CurrentScreen(): JSX.Element {
   const screen = useUiStore((s) => s.screen);
@@ -25,6 +26,7 @@ function CurrentScreen(): JSX.Element {
 export function App(): JSX.Element {
   const gate = useUiStore((s) => s.gate);
   const closeGate = useUiStore((s) => s.closeGate);
+  const busy = useUiStore((s) => s.busy);
 
   return (
     <>
@@ -40,6 +42,7 @@ export function App(): JSX.Element {
           onDismiss={closeGate}
         />
       )}
+      {busy && <BusyOverlay message={busy} />}
       <ParentNotice />
     </>
   );

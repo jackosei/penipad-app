@@ -26,22 +26,27 @@ type UiState = {
   gate: GateRequest | null;
   /** Parent-zone notice (plain language). Null when nothing to show. */
   parentNotice: string | null;
+  /** A blocking, plain-language progress message (e.g. while exporting). */
+  busy: string | null;
   openShelf: () => void;
   openSettings: () => void;
   openActivity: (documentId: string) => void;
   requestGate: (request: GateRequest) => void;
   closeGate: () => void;
   setParentNotice: (notice: string | null) => void;
+  setBusy: (message: string | null) => void;
 };
 
 export const useUiStore = create<UiState>((set) => ({
   screen: { name: 'shelf' },
   gate: null,
   parentNotice: null,
+  busy: null,
   openShelf: () => set({ screen: { name: 'shelf' } }),
   openSettings: () => set({ screen: { name: 'settings' } }),
   openActivity: (documentId) => set({ screen: { name: 'activity', documentId } }),
   requestGate: (request) => set({ gate: request }),
   closeGate: () => set({ gate: null }),
   setParentNotice: (notice) => set({ parentNotice: notice }),
+  setBusy: (message) => set({ busy: message }),
 }));
