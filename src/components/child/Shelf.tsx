@@ -7,9 +7,24 @@ import { useCallback, useEffect, useMemo, type JSX } from 'react';
 import type { DocumentRow } from '@/db/schema';
 import { useDocuments } from '@/hooks/use-documents';
 import { useUiStore } from '@/store/ui';
-import { FileText } from 'lucide-react';
+import { FileText, Settings as SettingsIcon } from 'lucide-react';
 import { ImportControl } from '@/components/parent/ImportControl';
 import { Welcome } from './Welcome';
+
+function SettingsButton(): JSX.Element {
+  const openSettings = useUiStore((s) => s.openSettings);
+  const requestGate = useUiStore((s) => s.requestGate);
+  return (
+    <button
+      type="button"
+      className="shelf__settings"
+      aria-label="settings"
+      onClick={() => requestGate({ label: 'Open grown-up settings.', onPass: openSettings })}
+    >
+      <SettingsIcon size={26} aria-hidden />
+    </button>
+  );
+}
 
 export function Shelf(): JSX.Element {
   const { documents, loading, refresh } = useDocuments();
@@ -36,6 +51,7 @@ export function Shelf(): JSX.Element {
 
   return (
     <main className="shelf">
+      <SettingsButton />
       <div className="shelf__grid">
         {documents.map((doc) => (
           <DocumentCard key={doc.id} document={doc} onOpen={() => openActivity(doc.id)} />

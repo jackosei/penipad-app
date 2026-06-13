@@ -204,6 +204,39 @@ export async function loadPageStrokeBatches(
   }));
 }
 
+// --- maintenance (parent zone) ----------------------------------------------------
+
+/** How many documents are on the shelf. */
+export function countDocuments(): Promise<number> {
+  return db.documents.count();
+}
+
+/**
+ * Delete every document and all its work. Parent-gated and destructive; the
+ * caller must confirm. Clears all tables in one transaction so the shelf can
+ * never end up half-wiped. [DATA SAFETY]
+ */
+export function deleteEverything(): Promise<void> {
+  return db.transaction(
+    'rw',
+    [db.documents, db.document_files, db.activities, db.pages, db.stroke_batches],
+    async () => {
+      await Promise.all(db.tables.map((table) => table.clear()));
+    },
+  );
+}
+
+/**
+ * Best-effort estimate of how much storage the app is using, in bytes. Returns
+ * null where the browser does not expose StorageManager (older WebViews), so
+ * the UI can omit the figure rather than show a wrong one.
+ */
+export async function estimateStorageBytes(): Promise<number | null> {
+  if (typeof navigator === 'undefined' || !navigator.storage?.estimate) return null;
+  const { usage } = await navigator.storage.estimate();
+  return typeof usage === 'number' ? usage : null;
+}
+
 // --- internals --------------------------------------------------------------------
 
 async function upsertPage(activityId: string, pageNumber: number, now: number): Promise<void> {

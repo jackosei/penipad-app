@@ -276,10 +276,125 @@ button {
   position: relative;
 }
 
+.gate-card__sum {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.gate-card__options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.gate-card__option {
+  height: 60px;
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.4rem;
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 rgba(51, 65, 92, 0.1);
+  transition: transform 0.08s ease;
+}
+
+.gate-card__option:active {
+  transform: scale(0.95);
+}
+
 .gate-card__dismiss {
   height: 48px;
   font-weight: 500;
   color: var(--ink-soft);
+}
+
+/* ---------- settings (parent zone) ---------- */
+
+.settings {
+  height: 100%;
+  overflow-y: auto;
+  padding: 18px 22px 40px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.settings__header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.settings__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.settings__section {
+  padding: 20px 0;
+  border-bottom: 2px solid var(--divider);
+}
+
+.settings__heading {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.settings__body {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.settings__warn {
+  margin: 10px 0 0;
+  font-weight: 600;
+  color: #d63a48;
+}
+
+.settings__danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 14px;
+  background: #ffe9eb;
+  color: #d63a48;
+  font-weight: 600;
+}
+
+.settings__danger:active {
+  transform: translateY(2px);
+}
+
+/* Shelf settings gear (gated entry). */
+.shelf__settings {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--paper);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 0 rgba(51, 65, 92, 0.12);
+  z-index: 10;
+}
+
+.shelf__settings:active {
+  transform: translateY(3px);
+  box-shadow: none;
 }
 
 /* ---------- parent notice ---------- */
