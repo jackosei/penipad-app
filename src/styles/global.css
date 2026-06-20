@@ -150,18 +150,6 @@ button {
   gap: 18px;
 }
 
-/* Small red dot marking parent-zone (gated) affordances. */
-.lock-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--lock);
-  border: 2px solid var(--paper);
-}
-
 /* ---------- welcome (first run) ---------- */
 
 .welcome {
@@ -363,12 +351,6 @@ button {
 
 .import-fab:disabled {
   opacity: 0.7;
-}
-
-.import-fab .lock-badge {
-  top: 2px;
-  right: 2px;
-  border-color: var(--accent);
 }
 
 /* ---------- parental gate ---------- */

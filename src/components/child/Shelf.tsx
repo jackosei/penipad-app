@@ -25,7 +25,6 @@ function SettingsButton(): JSX.Element {
       onClick={() => requestGate({ label: 'Open grown-up settings.', onPass: openSettings })}
     >
       <SettingsIcon size={22} aria-hidden />
-      <span className="lock-badge" aria-hidden />
     </button>
   );
 }
@@ -150,7 +149,6 @@ function ActivityCard({ document, completed, onOpen, onMore }: ActivityCardProps
         onClick={onMore}
       >
         <EllipsisVertical size={18} aria-hidden />
-        <span className="lock-badge" aria-hidden />
       </button>
     </div>
   );

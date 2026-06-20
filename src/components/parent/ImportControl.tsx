@@ -100,7 +100,7 @@ export function ImportControl({ onImported, variant = 'fab' }: ImportControlProp
       ) : (
         <button
           type="button"
-          className="import-button"
+          className="import-fab"
           aria-label="add worksheet"
           disabled={busy}
           onClick={gatePicker}
