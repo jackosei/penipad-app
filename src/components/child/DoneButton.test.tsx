@@ -1,56 +1,38 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DoneButton } from './DoneButton';
 import { StickerLayer } from './StickerLayer';
 import { InkEngine } from '@/engine';
 
 describe('DoneButton (F1.12)', () => {
-  let engine: InkEngine;
+  it('asks first, then fires onConfirm only after the child confirms', () => {
+    const onConfirm = vi.fn();
+    render(<DoneButton onConfirm={onConfirm} />);
 
-  beforeEach(() => {
-    engine = new InkEngine();
-  });
-
-  /** Tap Done, then confirm via the icon-only yes button. */
-  function tapDoneAndConfirm(): void {
     fireEvent.click(screen.getByRole('button', { name: 'done' }));
-    fireEvent.click(screen.getByRole('button', { name: 'yes' }));
-  }
-
-  it('asks first, then places a sticker on the active page', () => {
-    render(<DoneButton engine={engine} />);
-    fireEvent.click(screen.getByRole('button', { name: 'done' }));
-    // Nothing happens until the child confirms.
-    expect(engine.getPageStickers()).toHaveLength(0);
+    expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'yes' }));
-    expect(engine.getPageStickers()).toHaveLength(1);
+    expect(onConfirm).toHaveBeenCalledOnce();
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('cancelling the confirm places nothing', () => {
-    render(<DoneButton engine={engine} />);
+  it('cancelling the confirm fires nothing', () => {
+    const onConfirm = vi.fn();
+    render(<DoneButton onConfirm={onConfirm} />);
+
     fireEvent.click(screen.getByRole('button', { name: 'done' }));
     fireEvent.click(screen.getByRole('button', { name: 'no' }));
 
-    expect(engine.getPageStickers()).toHaveLength(0);
+    expect(onConfirm).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('is bounded: repeated confirms never spawn more than one sticker per page', () => {
-    render(<DoneButton engine={engine} />);
-
-    tapDoneAndConfirm();
-    tapDoneAndConfirm();
-    tapDoneAndConfirm();
-
-    expect(engine.getPageStickers()).toHaveLength(1);
-  });
-
-  it('is icon-only (no text label in the child zone)', () => {
-    const { container } = render(<DoneButton engine={engine} />);
-    expect(container.querySelector('button')?.textContent?.trim()).toBe('');
+  it('the button itself is icon-only (no text label in the child zone)', () => {
+    const { container } = render(<DoneButton onConfirm={vi.fn()} />);
+    const doneButton = container.querySelector('.top-button--done');
+    expect(doneButton?.textContent?.trim()).toBe('');
   });
 });
 

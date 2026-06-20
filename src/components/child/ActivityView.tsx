@@ -4,19 +4,23 @@
  * (tools, colors, sizes). The worksheet itself carries zero chrome; the page
  * is the hero.
  */
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 import { useActivitySession } from '@/hooks/use-activity-session';
 import { useDrawingSurface } from '@/hooks/use-drawing-surface';
 import { useUiStore } from '@/store/ui';
 import type { InkEngine } from '@/engine';
+import type { StickerId } from '@/types/ink';
 import type { PdfDocumentHandle } from '@/pdf/loader';
 import { House } from 'lucide-react';
+import { markActivityCompleted } from '@/db/queries';
+import { createCelebrationSticker } from '@/utils/sticker-placement';
 import { Toolbar } from './Toolbar';
 import { PageNav } from './PageNav';
 import { HistoryControls } from './HistoryControls';
 import { WipeButton } from './WipeButton';
 import { DoneButton } from './DoneButton';
 import { StickerLayer } from './StickerLayer';
+import { CompletionCard } from './CompletionCard';
 
 export type ActivityViewProps = {
   documentId: string;
@@ -54,6 +58,7 @@ export function ActivityView({ documentId }: ActivityViewProps): JSX.Element {
     <DrawingScreen
       engine={session.engine}
       pdf={session.pdf}
+      activityId={session.activityId}
       currentPage={session.currentPage}
       pageCount={session.pageCount}
       onNavigate={(page) => void session.goToPage(page)}
@@ -65,6 +70,7 @@ export function ActivityView({ documentId }: ActivityViewProps): JSX.Element {
 type DrawingScreenProps = {
   engine: InkEngine;
   pdf: PdfDocumentHandle;
+  activityId: string;
   currentPage: number;
   pageCount: number;
   onNavigate: (pageNumber: number) => void;
@@ -74,6 +80,7 @@ type DrawingScreenProps = {
 function DrawingScreen({
   engine,
   pdf,
+  activityId,
   currentPage,
   pageCount,
   onNavigate,
@@ -83,6 +90,17 @@ function DrawingScreen({
     useDrawingSurface(engine, pdf, currentPage);
 
   const stackStyle = cssSize ? { width: cssSize.width, height: cssSize.height } : undefined;
+
+  // The sticker shown in the completion card; null means no card is open.
+  const [earned, setEarned] = useState<StickerId | null>(null);
+
+  const handleDone = (): void => {
+    // One sticker per page (idempotent): reuse the page's sticker if it has one.
+    const existing = engine.getPageStickers();
+    const placed = existing[0] ?? engine.placeSticker(createCelebrationSticker(0));
+    void markActivityCompleted(activityId);
+    setEarned(placed.sticker);
+  };
 
   return (
     <main className="activity">
@@ -98,7 +116,7 @@ function DrawingScreen({
         <div className="topbar__cluster">
           <HistoryControls engine={engine} page={currentPage} />
           <WipeButton engine={engine} />
-          <DoneButton engine={engine} />
+          <DoneButton onConfirm={handleDone} />
         </div>
       </div>
 
@@ -117,6 +135,19 @@ function DrawingScreen({
       </div>
 
       <Toolbar engine={engine} />
+
+      {earned && (
+        <CompletionCard
+          sticker={earned}
+          hasNextPage={currentPage < pageCount}
+          onNextPage={() => {
+            setEarned(null);
+            onNavigate(currentPage + 1);
+          }}
+          onGoHome={onBack}
+          onDismiss={() => setEarned(null)}
+        />
+      )}
     </main>
   );
 }

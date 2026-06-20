@@ -11,6 +11,10 @@
   --surface: #f1f5fb;
   --surface-active: #dcebff;
   --divider: #e4eaf3;
+  /* Reward + parent-zone semantics (peni-pad-screens reference). */
+  --done: #ffc92a;
+  --done-dark: #d4a800;
+  --lock: #ff3b5c;
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -73,35 +77,89 @@ button {
   justify-content: center;
 }
 
-/* Header band keeps the settings and add buttons clear of the cover grid, so
-   they never overlap a cover's options button. */
-.shelf__header {
+/* Top bar (parent zone): wordmark on the left, settings on the right. Sits
+   above the scrollable grid so neither button overlaps a card. */
+.shelf-topbar {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   padding: 14px 20px;
 }
 
-.shelf__brand {
+.shelf-topbar__spacer {
   flex: 1;
-  margin: 0;
-  font-size: 1.4rem;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wordmark__tile {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wordmark__text {
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--ink);
 }
 
-.shelf__scroll {
+.wordmark__text span {
+  color: var(--accent);
+}
+
+.shelf-icon-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shelf-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px 20px 28px;
+  padding: 8px 20px 110px;
 }
 
-.shelf__grid {
+.shelf-section-label {
+  margin: 8px 4px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.shelf-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 22px;
+  gap: 18px;
+}
+
+/* Small red dot marking parent-zone (gated) affordances. */
+.lock-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--lock);
+  border: 2px solid var(--paper);
 }
 
 /* ---------- welcome (first run) ---------- */
@@ -169,39 +227,110 @@ button {
   opacity: 0.7;
 }
 
-.cover {
+/* ---------- activity card (hand-placed) ---------- */
+
+.activity-card {
   position: relative;
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--paper);
   box-shadow:
-    0 6px 0 rgba(51, 65, 92, 0.08),
-    0 10px 24px rgba(51, 65, 92, 0.1);
+    0 6px 0 rgba(51, 65, 92, 0.07),
+    0 12px 30px rgba(51, 65, 92, 0.12);
+  /* Cards feel hand-placed, not grid-locked. */
+  transition: transform 0.18s var(--spring);
 }
 
-.cover__open {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+.activity-card:nth-child(odd) {
+  transform: rotate(-1deg);
+}
+
+.activity-card:nth-child(even) {
+  transform: rotate(0.8deg);
+}
+
+.activity-card__open {
+  display: block;
   width: 100%;
-  padding: 12px;
-  border-radius: 20px;
-  transition: transform 0.12s var(--spring);
+  border-radius: 22px;
 }
 
-.cover__open:active {
-  transform: translateY(3px) scale(0.99);
+.activity-card__open:active {
+  transform: scale(0.98);
+}
+
+.activity-card__thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 22px 22px 0 0;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.activity-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.activity-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c3d2e6;
+}
+
+.activity-card__ribbon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--done);
+  color: var(--done-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.activity-card__info {
+  display: block;
+  padding: 10px 14px 14px;
+  text-align: left;
+}
+
+.activity-card__title {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-card__pages {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--ink-soft);
 }
 
 /* Parent affordance: small, top-right, off the child's one-tap open target. */
-.cover__more {
+.activity-card__more {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 40px;
-  height: 40px;
+  top: 8px;
+  right: 8px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--ink-soft);
   display: flex;
   align-items: center;
@@ -209,56 +338,37 @@ button {
   box-shadow: 0 2px 6px rgba(51, 65, 92, 0.18);
 }
 
-.cover__image,
-.cover__placeholder {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  border-radius: 12px;
-  background: #f7fafe;
-  object-fit: contain;
-  pointer-events: none;
-}
+/* ---------- import FAB (parent affordance) ---------- */
 
-.cover__placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #c3d2e6;
-}
-
-.cover__name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--ink);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ---------- import (parent affordance) ---------- */
-
-.import-button {
-  flex: 0 0 auto;
-  width: 60px;
-  height: 60px;
-  border-radius: 20px;
+.import-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
   background: var(--accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 0 var(--accent-shadow);
-  transition: transform 0.08s ease;
+  box-shadow: 0 6px 20px rgba(30, 144, 255, 0.4);
+  transition: transform 0.15s var(--spring);
+  z-index: 20;
 }
 
-.import-button:active {
-  transform: translateY(4px);
-  box-shadow: none;
+.import-fab:active {
+  transform: scale(0.92);
 }
 
-.import-button:disabled {
+.import-fab:disabled {
   opacity: 0.7;
+}
+
+.import-fab .lock-badge {
+  top: 2px;
+  right: 2px;
+  border-color: var(--accent);
 }
 
 /* ---------- parental gate ---------- */
@@ -841,6 +951,90 @@ button {
     transform: translateY(105vh) translateX(var(--drift, 0)) rotate(var(--spin, 360deg));
     opacity: 0;
   }
+}
+
+/* ---------- completion moment (F1.12) ---------- */
+
+.completion {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.completion__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(24, 23, 42, 0.7);
+}
+
+.completion__card {
+  position: relative;
+  z-index: 42;
+  width: min(340px, calc(100vw - 48px));
+  padding: 32px 28px 26px;
+  background: var(--paper);
+  border-radius: 28px;
+  box-shadow: 0 20px 50px rgba(24, 23, 42, 0.4);
+  text-align: center;
+  animation: confirm-pop 0.22s var(--spring);
+}
+
+.completion__star {
+  margin: 0 auto 10px;
+  display: block;
+  filter: drop-shadow(0 4px 8px rgba(212, 168, 0, 0.4));
+}
+
+.completion__heading {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.completion__subtext {
+  margin: 0 0 20px;
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+}
+
+.completion__sticker {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 24px;
+}
+
+.completion__sticker-art {
+  width: 100%;
+  height: 100%;
+}
+
+.completion__buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.completion__btn {
+  flex: 1;
+  min-height: 52px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--ink-soft);
+  transition: transform 0.08s ease;
+}
+
+.completion__btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.completion__btn:active {
+  transform: translateY(2px);
 }
 
 /* ---------- page navigation ---------- */

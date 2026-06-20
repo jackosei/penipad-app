@@ -109,6 +109,21 @@ export function updateActivityLastPage(activityId: string, pageNumber: number): 
   return db.activities.update(activityId, { last_page: pageNumber, updated_at: Date.now() });
 }
 
+/** Stamp the activity as completed (the child tapped "Done"; F1.12). */
+export function markActivityCompleted(activityId: string): Promise<number> {
+  return db.activities.update(activityId, { completed_at: Date.now(), updated_at: Date.now() });
+}
+
+/** Document ids whose activity has been marked completed (for the shelf ribbon). */
+export async function listCompletedDocumentIds(): Promise<Set<string>> {
+  const activities = await db.activities.toArray();
+  const ids = new Set<string>();
+  for (const activity of activities) {
+    if (activity.completed_at != null) ids.add(activity.document_id);
+  }
+  return ids;
+}
+
 /** Page numbers in this activity that have (or had) ink, ascending. */
 export async function listInkedPageNumbers(activityId: string): Promise<number[]> {
   const rows = await db.pages.where('activity_id').equals(activityId).toArray();

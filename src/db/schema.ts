@@ -59,6 +59,12 @@ export type ActivityRow = {
   document_id: string;
   /** Last page the child was on; the resume target. */
   last_page: number;
+  /**
+   * When the child last tapped "Done" (F1.12). Non-indexed, so no schema
+   * version bump; absent on activities from before completion existed. Drives
+   * the shelf "Done" ribbon. Manual completion, no correctness logic.
+   */
+  completed_at?: number | null;
   created_at: number;
   updated_at: number;
 };
